@@ -3,6 +3,7 @@ package info.kgeorgiy.ja.dunaev.walk;
 import java.util.HexFormat;
 
 public class JenkinsHasher implements Hasher {
+    private final String errorHash = format(0);
     private int hash = 0;
 
     @Override
@@ -28,7 +29,7 @@ public class JenkinsHasher implements Hasher {
 
     @Override
     public String errorHash() {
-        return format(0);
+        return errorHash;
     }
 
 

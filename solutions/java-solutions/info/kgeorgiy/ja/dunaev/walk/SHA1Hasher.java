@@ -6,9 +6,11 @@ import java.util.HexFormat;
 
 public class SHA1Hasher implements Hasher {
     private final MessageDigest digest;
+    private final String errorHash;
 
     SHA1Hasher() throws NoSuchAlgorithmException {
         digest = MessageDigest.getInstance("sha-1");
+        errorHash = format(new byte[digest.getDigestLength()]);
     }
 
     @Override
@@ -24,7 +26,7 @@ public class SHA1Hasher implements Hasher {
 
     @Override
     public String errorHash() {
-        return format(new byte[digest.getDigestLength()]);
+        return errorHash;
     }
 
     @Override
