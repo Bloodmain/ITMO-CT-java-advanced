@@ -7,48 +7,65 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.NoSuchAlgorithmException;
 import java.util.EnumSet;
 
 public class Walker {
     private static final int BUFFER_SIZE = 4096;
-    private static final Hasher HASHER = new JenkinsHasher();
-    private static final int ERROR_HASH = 0;
 
-    private static int calculateHashCode(Path path) {
-        try (InputStream fileStream = Files.newInputStream(path)) {
-            byte[] buffer = new byte[BUFFER_SIZE];
+    private static String calculateHashCode(final Path path, final Hasher hasher) {
+        try (final InputStream fileStream = Files.newInputStream(path)) {
+            hasher.reset();
+            // :NOTE: reuse
+            final byte[] buffer = new byte[BUFFER_SIZE];
             int count;
             while ((count = fileStream.read(buffer)) != -1) {
-                HASHER.update(buffer, count);
+                hasher.update(buffer, count);
             }
-            return HASHER.digest();
-        } catch (IOException e) {
-            HASHER.reset();
-            return 0;
+            return hasher.digest();
+        } catch (final IOException e) {
+            return hasher.errorHash();
         }
     }
 
-    private static BufferedWriter openFileWrite(Path path) throws IOException {
+    private static BufferedWriter openFileWrite(final Path path) throws IOException {
         if (path.getParent() != null) {
+            // :NOTE: fail on error?
             Files.createDirectories(path.getParent());
         }
-        return Files.newBufferedWriter(path, StandardCharsets.UTF_8);
+        return Files.newBufferedWriter(path);
     }
 
-    private static Path getpath(String pathname) {
+    private static Path getpath(final String pathname) {
         try {
             return Paths.get(pathname);
-        } catch (InvalidPathException e) {
+        } catch (final InvalidPathException e) {
             return null;
         }
     }
 
-    private static void write(BufferedWriter writer, int hash, String pathname) throws IOException {
-        writer.write(String.format("%08x %s", hash, pathname));
+    private static void write(final BufferedWriter writer, final String hash, final String pathname) throws IOException {
+        writer.write(hash + " " + pathname);
         writer.newLine();
     }
 
-    public static void walk(String[] args, int depth) {
+
+    // :NOTE: Map
+    private static Hasher getHasher(final String algorithm) {
+        if (algorithm.equals("jenkins")) {
+            return new JenkinsHasher();
+        } else {
+            try {
+                return new MessageDigestHasher(algorithm);
+            } catch (final NoSuchAlgorithmException e) {
+                return null;
+            }
+        }
+    }
+
+    /* package-private */
+    static void walk(final String[] args, final int depth) {
+        // :NOTE: code reuse
         if (args == null) {
             System.err.println("Expected array with input and output filenames");
             return;
@@ -64,41 +81,58 @@ public class Walker {
             return;
         }
 
+        final Hasher hasher;
+        if (args.length == 3) {
+            if (args[2] == null) {
+                System.err.println("Expected non-null hash algorithm name as the third argument");
+                return;
+            }
+            hasher = getHasher(args[2]);
+            if (hasher == null) {
+                System.err.println("Unsupported hash algorithm: \"" + args[2] + "\"");
+                return;
+            }
+        } else {
+            hasher = getHasher("jenkins");
+        }
+
+        // :NOTE: charset
         try (
-                BufferedReader input = Files.newBufferedReader(Paths.get(args[0]), StandardCharsets.UTF_8);
-                BufferedWriter output = openFileWrite(Paths.get(args[1]))
+                final BufferedReader input = Files.newBufferedReader(Paths.get(args[0]), StandardCharsets.UTF_8);
+                final BufferedWriter output = openFileWrite(Paths.get(args[1]))
         ) {
             String pathname;
             while ((pathname = input.readLine()) != null) {
-                Path path = getpath(pathname);
                 try {
-                    if (path == null) {
-                        write(output, ERROR_HASH, pathname);
-                        continue;
+                    try {
+                        Path path = Paths.get(pathname);
+                        // :NOTE: EnumSet.noneOf(FileVisitOption.class)
+                        // :NOTE: Reuse
+                        Files.walkFileTree(path, EnumSet.noneOf(FileVisitOption.class), depth, new SimpleFileVisitor<>() {
+                            @Override
+                            public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
+                                    throws IOException {
+                                final String hash = calculateHashCode(file, hasher);
+                                write(output, hash, file.toString());
+                                return FileVisitResult.CONTINUE;
+                            }
+
+                            @Override
+                            public FileVisitResult visitFileFailed(final Path file, final IOException e)
+                                    throws IOException {
+                                write(output, hasher.errorHash(), file.toString());
+                                return FileVisitResult.CONTINUE;
+                            }
+                        });
+                    } catch (final InvalidPathException e1) {
+                        write(output, hasher.errorHash(), pathname);
                     }
-
-                    Files.walkFileTree(path, EnumSet.noneOf(FileVisitOption.class), depth, new SimpleFileVisitor<>() {
-                        @Override
-                        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-                                throws IOException {
-                            int hash = calculateHashCode(file);
-                            write(output, hash, file.toString());
-                            return FileVisitResult.CONTINUE;
-                        }
-
-                        @Override
-                        public FileVisitResult visitFileFailed(Path file, IOException e)
-                                throws IOException {
-                            write(output, ERROR_HASH, file.toString());
-                            return FileVisitResult.CONTINUE;
-                        }
-                    });
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     System.err.println("Can't write to file: " + e.getMessage());
                 }
             }
-
-        } catch (IOException | InvalidPathException e) {
+        } catch (final IOException | InvalidPathException e) {
+            // :NOTE: More context
             System.err.println("Can't open input/output file: " + e.getMessage());
         }
     }

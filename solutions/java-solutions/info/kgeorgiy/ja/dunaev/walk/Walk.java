@@ -1,7 +1,7 @@
 package info.kgeorgiy.ja.dunaev.walk;
 
-public class Walk extends Walker {
+public class Walk {
     public static void main(String[] args) {
-        walk(args, 0);
+        Walker.walk(args, 0);
     }
 }

@@ -42,6 +42,7 @@ public class WalkUtil {
 
     /* pckage-private */ final String errorHash;
 
+    @SuppressWarnings("this-escape")
     public WalkUtil() {
         errorHash = hash(null);
     }

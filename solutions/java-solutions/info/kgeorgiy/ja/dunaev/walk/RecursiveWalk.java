@@ -1,7 +1,7 @@
 package info.kgeorgiy.ja.dunaev.walk;
 
-public class RecursiveWalk extends Walker {
+public class RecursiveWalk {
     public static void main(String[] args) {
-        walk(args, Integer.MAX_VALUE);
+        Walker.walk(args, Integer.MAX_VALUE);
     }
 }
