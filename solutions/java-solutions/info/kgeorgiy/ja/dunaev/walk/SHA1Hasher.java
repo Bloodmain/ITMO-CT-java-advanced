@@ -1,8 +1,8 @@
 package info.kgeorgiy.ja.dunaev.walk;
 
-import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 
 public class SHA1Hasher implements Hasher {
     private final MessageDigest digest;
@@ -12,7 +12,7 @@ public class SHA1Hasher implements Hasher {
     }
 
     @Override
-    public void update(byte[] data, int size) {
+    public void update(final byte[] data, final int size) {
         digest.update(data, 0, size);
     }
 
@@ -24,7 +24,7 @@ public class SHA1Hasher implements Hasher {
 
     @Override
     public String errorHash() {
-        return format(new byte[]{0});
+        return format(new byte[digest.getDigestLength()]);
     }
 
     @Override
@@ -32,7 +32,7 @@ public class SHA1Hasher implements Hasher {
         digest.reset();
     }
 
-    private String format(byte[] hash) {
-        return String.format("%0" + (digest.getDigestLength() << 1) + "x", new BigInteger(1, hash));
+    private String format(final byte[] hash) {
+        return HexFormat.of().formatHex(hash);
     }
 }

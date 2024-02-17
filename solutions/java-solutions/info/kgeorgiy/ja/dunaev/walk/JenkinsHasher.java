@@ -1,10 +1,12 @@
 package info.kgeorgiy.ja.dunaev.walk;
 
+import java.util.HexFormat;
+
 public class JenkinsHasher implements Hasher {
     private int hash = 0;
 
     @Override
-    public void update(byte[] data, int size) {
+    public void update(final byte[] data, final int size) {
         for (int i = 0; i < size; ++i) {
             hash += Byte.toUnsignedInt(data[i]);
             hash += hash << 10;
@@ -35,7 +37,7 @@ public class JenkinsHasher implements Hasher {
         hash = 0;
     }
 
-    private String format(int hashcode) {
-        return String.format("%08x", hashcode);
+    private String format(final int hashcode) {
+        return HexFormat.of().toHexDigits(hashcode);
     }
 }
