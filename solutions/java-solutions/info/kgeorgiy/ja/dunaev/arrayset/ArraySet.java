@@ -20,9 +20,9 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
         isNaturalOrdered = comparator == null;
         this.comparator = wrapComparator(comparator);
 
-        Set<E> distinctValues = new TreeSet<>(this.comparator);
+        final SortedSet<E> distinctValues = new TreeSet<>(this.comparator);
         distinctValues.addAll(collection);
-        storage = Collections.unmodifiableList(new ArrayList<>(distinctValues));
+        storage = List.copyOf(distinctValues);
     }
 
     /* view constructor */
@@ -58,47 +58,40 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
     }
 
     @Override
-    public E lower(E element) {
-        SortedSet<E> set = headSet(element, false);
-        return set.isEmpty() ? null : set.getLast();
+    public E lower(final E element) {
+        return getOrNull(lowerBound(element, false) - 1);
     }
 
     @Override
-    public E floor(E element) {
-        SortedSet<E> set = headSet(element, true);
-        return set.isEmpty() ? null : set.getLast();
+    public E floor(final E element) {
+        return getOrNull(lowerBound(element, true) - 1);
     }
 
     @Override
-    public E ceiling(E element) {
-        SortedSet<E> set = tailSet(element, true);
-        return set.isEmpty() ? null : set.getFirst();
+    public E ceiling(final E element) {
+        return getOrNull(lowerBound(element, false));
     }
 
     @Override
-    public E higher(E element) {
-        SortedSet<E> set = tailSet(element, false);
-        return set.isEmpty() ? null : set.getFirst();
+    public E higher(final E element) {
+        return getOrNull(lowerBound(element, true));
     }
 
     @Override
     public E first() {
-        if (isEmpty()) {
-            throw new NoSuchElementException("Call \"first()\" on empty set");
-        }
+        assertNotEmpty("Call \"first()\" on empty set");
         return storage.getFirst();
     }
 
     @Override
     public E last() {
-        if (isEmpty()) {
-            throw new NoSuchElementException("Call \"last()\" on empty set");
-        }
+        assertNotEmpty("Call \"last()\" on empty set");
         return storage.getLast();
     }
 
     @Override
-    public NavigableSet<E> subSet(E fromElement, boolean fromInclusive, E toElement, boolean toInclusive) {
+    public NavigableSet<E> subSet(final E fromElement, final boolean fromInclusive,
+                                  final E toElement, final boolean toInclusive) {
         if (comparator.compare(fromElement, toElement) > 0) {
             throw new IllegalArgumentException("Call \"subset(from, to)\" with from > to");
         }
@@ -106,12 +99,12 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
     }
 
     @Override
-    public NavigableSet<E> headSet(E toElement, boolean inclusive) {
+    public NavigableSet<E> headSet(final E toElement, final boolean inclusive) {
         return subView(0, lowerBound(toElement, inclusive));
     }
 
     @Override
-    public NavigableSet<E> tailSet(E fromElement, boolean inclusive) {
+    public NavigableSet<E> tailSet(final E fromElement, final boolean inclusive) {
         return subView(lowerBound(fromElement, !inclusive), size());
     }
 
@@ -147,10 +140,10 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
     }
 
     @SuppressWarnings("unchecked")
-    private Comparator<? super E> wrapComparator(Comparator<? super E> comparator) {
+    private Comparator<? super E> wrapComparator(final Comparator<? super E> comparator) {
         if (comparator == null) {
             return (first, second) -> {
-                Comparable<? super E> compFirst = (Comparable<? super E>) first;
+                final Comparable<? super E> compFirst = (Comparable<? super E>) first;
                 return compFirst.compareTo(second);
             };
         }
@@ -166,6 +159,19 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
         }
 
         return lowerBound;
+    }
+
+    private E getOrNull(final int index) {
+        if (0 <= index && index < size()) {
+            return storage.get(index);
+        }
+        return null;
+    }
+
+    private void assertNotEmpty(final String message) {
+        if (isEmpty()) {
+            throw new NoSuchElementException(message);
+        }
     }
 
     private int binarySearch(final E element) {
