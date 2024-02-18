@@ -104,8 +104,7 @@ public class Walker {
                 try {
                     while ((pathname = input.readLine()) != null) {
                         try {
-                            Path path = Paths.get(pathname);
-                            Files.walkFileTree(path, OPTIONS, depth, hashFileVisitor);
+                            Files.walkFileTree(Paths.get(pathname), OPTIONS, depth, hashFileVisitor);
                         } catch (final InvalidPathException e) {
                             write(output, hasher.errorHash(), pathname);
                         } catch (final IOException e) {
