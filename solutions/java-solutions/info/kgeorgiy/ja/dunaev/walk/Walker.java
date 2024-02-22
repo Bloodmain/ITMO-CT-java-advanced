@@ -104,9 +104,11 @@ public class Walker {
                 try {
                     while ((pathname = input.readLine()) != null) {
                         try {
-                            Files.walkFileTree(Paths.get(pathname), OPTIONS, depth, hashFileVisitor);
-                        } catch (final InvalidPathException e) {
-                            write(output, hasher.errorHash(), pathname);
+                            try {
+                                Files.walkFileTree(Paths.get(pathname), OPTIONS, depth, hashFileVisitor);
+                            } catch (final InvalidPathException e) {
+                                write(output, hasher.errorHash(), pathname);
+                            }
                         } catch (final IOException e) {
                             throw new IOFileException("Can't write to output file: " + e.getMessage(), e);
                         }
