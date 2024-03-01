@@ -22,7 +22,7 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E>, List
 
         final SortedSet<E> distinctValues = new TreeSet<>(this.comparator);
         distinctValues.addAll(collection);
-        storage = List.copyOf(distinctValues);
+        storage = Collections.unmodifiableList(new ArrayList<>(distinctValues));
     }
 
     /* view constructor */
@@ -176,18 +176,14 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E>, List
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public boolean contains(final Object object) {
-        return binarySearch((E) object) >= 0;
+        return indexOf(object) != -1;
     }
 
     @SuppressWarnings("unchecked")
     private Comparator<? super E> wrapComparator(final Comparator<? super E> comparator) {
         if (comparator == null) {
-            return (first, second) -> {
-                final Comparable<? super E> compFirst = (Comparable<? super E>) first;
-                return compFirst.compareTo(second);
-            };
+            return (Comparator<? super E>) Comparator.naturalOrder();
         }
         return comparator;
     }
