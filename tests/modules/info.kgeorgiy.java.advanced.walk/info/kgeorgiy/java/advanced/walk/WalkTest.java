@@ -1,10 +1,9 @@
 package info.kgeorgiy.java.advanced.walk;
 
 import info.kgeorgiy.java.advanced.base.BaseTest;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,7 +19,6 @@ import java.util.stream.Collectors;
  *
  * @author Georgiy Korneev (kgeorgiy@kgeorgiy.info)
  */
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class WalkTest extends BaseTest {
     protected static final byte[] DIR_CONTENT = new byte[]{0, 1, 2, 3};
 
@@ -29,14 +27,13 @@ public class WalkTest extends BaseTest {
     public WalkTest() {
     }
 
-
-    @BeforeClass
-    public static void beforeClass() throws IOException {
+    @BeforeAll
+    public static void beforeAll() throws IOException {
         WalkUtil.clear();
     }
 
     protected Path testDir() {
-        return WalkUtil.path(testMethodName);
+        return WalkUtil.path(testName);
     }
 
     @Test
@@ -125,12 +122,12 @@ public class WalkTest extends BaseTest {
 
     @Test
     public void test51_dirSupport() throws IOException {
-        missingDirs(testMethodName + File.separator + testMethodName + ".out");
+        missingDirs(testName + File.separator + testName + ".out");
     }
 
     @Test
     public void test52_dirsSupport() throws IOException {
-        missingDirs(testMethodName + File.separator + "111" + File.separator + testMethodName + ".out");
+        missingDirs(testName + File.separator + "111" + File.separator + testName + ".out");
     }
 
     @Test
@@ -161,10 +158,10 @@ public class WalkTest extends BaseTest {
 
     @Test
     public void test62_invalidOutput() throws IOException {
-        final String input = createEmptyFile(testMethodName);
+        final String input = createEmptyFile(testName);
         util.run(input, WalkUtil.path("").toString());
         util.run(input, "\0*");
-        final String file = createEmptyFile(testMethodName);
+        final String file = createEmptyFile(testName);
         util.run(input, file + File.separator + util.randomFileName());
     }
 
@@ -175,7 +172,7 @@ public class WalkTest extends BaseTest {
 
     @Test
     public void test70_singleArgument() throws IOException {
-        util.run(createEmptyFile(testMethodName));
+        util.run(createEmptyFile(testName));
     }
 
     @Test
@@ -195,7 +192,7 @@ public class WalkTest extends BaseTest {
 
     @Test
     public void test74_secondArgumentNull() throws IOException {
-        util.run(createEmptyFile(testMethodName), null);
+        util.run(createEmptyFile(testName), null);
     }
 
     @Test
@@ -209,7 +206,7 @@ public class WalkTest extends BaseTest {
 
     private void missingDirs(final String output) throws IOException {
         final TestCase testCase = new TestCase().randomFiles(10, 100);
-        check(testCase.files.keySet(), testCase.files, testMethodName + ".in", output);
+        check(testCase.files.keySet(), testCase.files, testName + ".in", output);
     }
 
     private void testAlphabet(final int n, final int maxSize, final String alphabet) throws IOException {
@@ -267,7 +264,7 @@ public class WalkTest extends BaseTest {
         }
 
         private void test(final Collection<String> inputs, final Map<String, byte[]> resolved) {
-            check(inputs, resolved, testMethodName + ".in", testMethodName + ".out");
+            check(inputs, resolved, testName + ".in", testName + ".out");
         }
 
         TestCase randomFiles(final int n, final int maxSize) throws IOException {

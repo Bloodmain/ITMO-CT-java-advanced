@@ -35,7 +35,7 @@ public class Walker {
         if (path.getParent() != null) {
             try {
                 Files.createDirectories(path.getParent());
-            } catch (IOException ignored) {
+            } catch (final IOException ignored) {
             }
         }
         return Files.newBufferedWriter(path);
@@ -63,39 +63,53 @@ public class Walker {
             throw new BadArgumentException("Expected input and output filenames, provided: " + args.length + " arguments");
         }
 
-        if (args[0] == null || args[1] == null) {
+        final String inputPath = args[0];
+        final String outputPath = args[1];
+        if (inputPath == null || outputPath == null) {
             throw new BadArgumentException("Expected non-null string arguments (input and output filenames)");
+        }
+
+        final String algorithm;
+        if (args.length == 3) {
+            if (args[2] == null) {
+                throw new BadArgumentException("Expected non-null hash algorithm name as the third argument");
+            }
+            algorithm = args[2];
+        } else {
+            algorithm = DEFAULT_HASH_ALGORITHM;
         }
 
         final Hasher hasher;
         try {
-            if (args.length == 3) {
-                if (args[2] == null) {
-                    throw new BadArgumentException("Expected non-null hash algorithm name as the third argument");
-                }
-                hasher = getHasher(args[2]);
-            } else {
-                hasher = getHasher(DEFAULT_HASH_ALGORITHM);
-            }
+            hasher = getHasher(algorithm);
         } catch (final NoSuchAlgorithmException e) {
             throw new UnsupportedHashAlgorithmException("Unsupported hash algorithm: \"" + args[2] + "\"");
         }
 
-        try (final BufferedReader input = Files.newBufferedReader(Paths.get(args[0]))) {
-            try (final BufferedWriter output = openFileWrite(Paths.get(args[1]))) {
+        walk(inputPath, outputPath, hasher, depth);
+    }
+
+    private static void walk(
+            final String inputPath, final String outputPath, final Hasher hasher, final int depth
+    ) throws IOFileException, PathException {
+        try (final BufferedReader input = Files.newBufferedReader(Path.of(inputPath))) {
+            try (final BufferedWriter output = openFileWrite(Path.of(outputPath))) {
                 final FileVisitor<Path> hashFileVisitor = new SimpleFileVisitor<>() {
                     @Override
                     public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
                             throws IOException {
-                        final String hash = calculateHashCode(file, hasher);
-                        write(output, hash, file.toString());
-                        return FileVisitResult.CONTINUE;
+                        return writeHash(output, calculateHashCode(file, hasher), file);
                     }
 
                     @Override
                     public FileVisitResult visitFileFailed(final Path file, final IOException e)
                             throws IOException {
-                        write(output, hasher.errorHash(), file.toString());
+                        return writeHash(output, hasher.errorHash(), file);
+                    }
+
+                    private static FileVisitResult writeHash(final BufferedWriter output, final String hash,
+                                                             final Path file) throws IOException {
+                        write(output, hash, file.toString());
                         return FileVisitResult.CONTINUE;
                     }
                 };
@@ -105,7 +119,7 @@ public class Walker {
                     while ((pathname = input.readLine()) != null) {
                         try {
                             try {
-                                Files.walkFileTree(Paths.get(pathname), OPTIONS, depth, hashFileVisitor);
+                                Files.walkFileTree(Path.of(pathname), OPTIONS, depth, hashFileVisitor);
                             } catch (final InvalidPathException e) {
                                 write(output, hasher.errorHash(), pathname);
                             }

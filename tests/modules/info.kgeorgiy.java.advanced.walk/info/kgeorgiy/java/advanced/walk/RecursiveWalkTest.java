@@ -1,8 +1,6 @@
 package info.kgeorgiy.java.advanced.walk;
 
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -15,12 +13,12 @@ import java.util.stream.Collectors;
  * for <a href="https://www.kgeorgiy.info/courses/java-advanced/">Java Advanced</a> course.
  * @author Georgiy Korneev (kgeorgiy@kgeorgiy.info)
  */
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RecursiveWalkTest extends WalkTest {
     public RecursiveWalkTest() {
     }
 
-    @Test @Override
+    @Test
+    @Override
     public void test46_filesAndDirs() throws IOException {
         new TestCase()
                 .randomFiles(10, 10)

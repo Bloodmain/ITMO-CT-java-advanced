@@ -4,8 +4,9 @@
  * @author Georgiy Korneev (kgeorgiy@kgeorgiy.info)
  */
 module info.kgeorgiy.java.advanced.base {
-    requires transitive junit;
+    requires transitive org.junit.jupiter.api;
+    requires org.junit.platform.launcher;
 
     exports info.kgeorgiy.java.advanced.base;
-    opens info.kgeorgiy.java.advanced.base to junit;
+    opens info.kgeorgiy.java.advanced.base to org.junit.platform.launcher;
 }

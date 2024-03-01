@@ -8,7 +8,7 @@ public class SHA1Hasher implements Hasher {
     private final MessageDigest digest;
     private final String errorHash;
 
-    SHA1Hasher() throws NoSuchAlgorithmException {
+    public SHA1Hasher() throws NoSuchAlgorithmException {
         digest = MessageDigest.getInstance("sha-1");
         errorHash = format(new byte[digest.getDigestLength()]);
     }

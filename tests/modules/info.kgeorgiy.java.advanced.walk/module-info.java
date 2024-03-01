@@ -9,5 +9,5 @@ module info.kgeorgiy.java.advanced.walk {
 
     exports info.kgeorgiy.java.advanced.walk;
 
-    opens info.kgeorgiy.java.advanced.walk to junit;
+    opens info.kgeorgiy.java.advanced.walk to org.junit.platform.launcher;
 }

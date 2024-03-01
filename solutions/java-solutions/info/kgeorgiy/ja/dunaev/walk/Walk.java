@@ -3,7 +3,7 @@ package info.kgeorgiy.ja.dunaev.walk;
 import info.kgeorgiy.ja.dunaev.walk.exceptions.WalkException;
 
 public class Walk {
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         try {
             Walker.walk(args, 0);
         } catch (final WalkException e) {

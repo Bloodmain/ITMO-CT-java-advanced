@@ -17,6 +17,7 @@ public final class Tester {
         new BaseTester()
                 .add("SortedSet", SortedSetTest.class)
                 .add("NavigableSet", NavigableSetTest.class)
+                .add("AdvancedSet", AdvancedSetTest.class)
                 .run(args);
     }
 }

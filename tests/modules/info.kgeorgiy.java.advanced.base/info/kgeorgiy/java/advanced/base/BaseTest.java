@@ -1,12 +1,6 @@
 package info.kgeorgiy.java.advanced.base;
 
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.rules.TestRule;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
@@ -18,31 +12,19 @@ import java.util.concurrent.*;
  *
  * @author Georgiy Korneev (kgeorgiy@kgeorgiy.info)
  */
-@RunWith(JUnit4.class)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class BaseTest {
     public static final String CUT_PROPERTY = "cut";
 
-    protected String testMethodName;
-
-
-    @Rule
-    public final TestRule watcher = new TestWatcher() {
-        private long startTime;
-
-        @Override
-        protected void starting(final Description description) {
-            startTime = System.currentTimeMillis();
-            testMethodName = description.getMethodName();
-            System.err.println("=== Running " + testMethodName);
-        }
-
-        @Override
-        protected void finished(final Description description) {
-            System.err.printf("    %s finished in %dms%n", testMethodName, System.currentTimeMillis() - startTime);
-        }
-    };
+    protected String testName;
+    private long testStartTime;
 
     public BaseTest() {
+    }
+
+    @BeforeEach
+    public final void beforeTest(final TestInfo test) {
+        testName = test.getDisplayName();
     }
 
     @SuppressWarnings({"unchecked", "unused"})
@@ -58,7 +40,7 @@ public class BaseTest {
 
     public static Class<?> loadClass() {
         final String className = System.getProperty(CUT_PROPERTY);
-        Assert.assertNotNull("Class name not specified", className);
+        Assertions.assertNotNull(className, "Class name not specified");
 
         try {
             return Class.forName(className);
@@ -67,7 +49,7 @@ public class BaseTest {
         }
     }
 
-    public <E extends Exception> void parallelCommands(final int threads, final List<Command<E>> commands) {
+    public static <E extends Exception> void parallelCommands(final int threads, final List<Command<E>> commands) {
         final ExecutorService executor = Executors.newFixedThreadPool(threads);
         try {
             for (final Future<Void> future : executor.invokeAll(commands)) {
@@ -79,16 +61,22 @@ public class BaseTest {
         }
     }
 
-    public <E extends Exception> void parallel(final int threads, final Command<E> command) {
+    public static <E extends Exception> void parallel(final int threads, final Command<E> command) {
         parallelCommands(threads, Collections.nCopies(threads, command));
     }
 
     public static void checkConstructor(final String description, final Class<?> token, final Class<?>... params) {
-        try {
-            token.getConstructor(params);
-        } catch (final NoSuchMethodException e) {
-            Assert.fail(token.getName() + " should have " + description);
-        }
+        Assertions.assertDoesNotThrow(
+                () -> token.getConstructor(params),
+                token.getName() + " should have " + description
+        );
+    }
+
+    protected static void checkImplements(final Class<?> type, final Class<?> value) {
+        Assertions.assertTrue(
+                type.isAssignableFrom(value),
+                value.getName() + " should implement " + type.getSimpleName() + " interface"
+        );
     }
 
     public interface Command<E extends Exception> extends Callable<Void> {

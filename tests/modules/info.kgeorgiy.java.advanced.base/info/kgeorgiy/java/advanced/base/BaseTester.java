@@ -1,9 +1,16 @@
 package info.kgeorgiy.java.advanced.base;
 
-import org.junit.runner.JUnitCore;
-import org.junit.runner.Result;
-import org.junit.runner.notification.Failure;
+import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.discovery.DiscoverySelectors;
+import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.TestExecutionListener;
+import org.junit.platform.launcher.TestIdentifier;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
+import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
+import org.junit.platform.launcher.listeners.TestExecutionSummary;
 
+import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -20,6 +27,7 @@ public final class BaseTester {
     public BaseTester() {
     }
 
+    @SuppressWarnings("unused")
     public static void depends(final Class<?> classes) {
     }
 
@@ -32,6 +40,7 @@ public final class BaseTester {
         final String test = args[0];
         final String cut = args[1];
         if (!tests.containsKey(test)) {
+            System.out.println("Unknown variant " + test);
             printUsage();
             return;
         }
@@ -52,22 +61,53 @@ public final class BaseTester {
         System.err.printf("Running %s for %s%n", test, cut);
 
         System.setProperty(BaseTest.CUT_PROPERTY, cut);
-        final Result result = new JUnitCore().run(test);
-        if (result.wasSuccessful()) {
+
+        final SummaryGeneratingListener summaryListener = new SummaryGeneratingListener();
+        final LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+                .selectors(DiscoverySelectors.selectClass(test))
+                .build();
+
+        final TestExecutionListener timeListener = new TestExecutionListener() {
+            private final PrintStream err = System.err;
+            private long startTime;
+
+            @Override
+            public void executionStarted(final TestIdentifier test) {
+                if (test.isTest()) {
+                    startTime = System.currentTimeMillis();
+                    err.println("=== Running " + test.getDisplayName());
+                }
+            }
+
+            @Override
+            public void executionFinished(final TestIdentifier test, final TestExecutionResult result) {
+                if (test.isTest()) {
+                    System.err.printf(
+                            "--- %s finished in %dms%n",
+                            test.getDisplayName(),
+                            System.currentTimeMillis() - startTime
+                    );
+                }
+            }
+        };
+
+        LauncherFactory.create().execute(request, summaryListener, timeListener);
+        final TestExecutionSummary summary = summaryListener.getSummary();
+        if (summary.getTestsFailedCount() == 0) {
             return test;
         }
 
-        for (final Failure failure : result.getFailures()) {
-            System.err.println("Test " + failure.getDescription().getMethodName() + " failed: " + failure.getMessage());
-            if (failure.getException() != null) {
-                failure.getException().printStackTrace();
-            }
+        for (final TestExecutionSummary.Failure failure : summary.getFailures()) {
+            final Throwable exception = failure.getException();
+            System.err.println("Test " + failure.getTestIdentifier().getDisplayName() + " failed: " + exception.getMessage());
+            //noinspection CallToPrintStackTrace
+            exception.printStackTrace();
         }
         System.exit(1);
         throw new AssertionError("Exit");
     }
 
-    protected static void certify(final Class<?> token, final String salt) {
+    private static void certify(final Class<?> token, final String salt) {
         try {
             final CG cg = (CG) Class.forName("info.kgeorgiy.java.advanced.base.CertificateGenerator").getDeclaredConstructor().newInstance();
             cg.certify(token, salt);
@@ -75,6 +115,7 @@ public final class BaseTester {
             // Ignore
         } catch (final Exception e) {
             System.err.println("Error running certificate generator");
+            //noinspection CallToPrintStackTrace
             e.printStackTrace();
         }
     }

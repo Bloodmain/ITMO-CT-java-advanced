@@ -1,7 +1,8 @@
 package info.kgeorgiy.java.advanced.arrayset;
 
 import info.kgeorgiy.java.advanced.base.BaseTest;
-import org.junit.Assert;
+
+import org.junit.jupiter.api.Assertions;
 
 import java.util.*;
 import java.util.function.BiFunction;
@@ -63,11 +64,11 @@ public abstract class BaseSetTest extends BaseTest {
     }
 
     protected static <E extends Number, S extends SortedSet<E>> void assertEq(final String context, final S model, final S tested) {
-        Assert.assertEquals("invalid element order " + context, toList(model), toList(tested));
-        Assert.assertEquals("invalid toArray " + context, toArray(model), toArray(tested));
-        Assert.assertEquals("invalid set size " + context, model.size(), (Object) tested.size());
-        Assert.assertEquals("invalid isEmpty " + context, model.isEmpty(), tested.isEmpty());
-        Assert.assertSame("invalid comparator " + context, model.comparator(), tested.comparator());
+        Assertions.assertEquals(toList(model), toList(tested), "invalid element order " + context);
+        Assertions.assertEquals(toArray(model), toArray(tested), "invalid toArray " + context);
+        Assertions.assertEquals(model.size(), (Object) tested.size(), "invalid set size " + context);
+        Assertions.assertEquals(model.isEmpty(), tested.isEmpty(), "invalid isEmpty " + context);
+        Assertions.assertSame(model.comparator(), tested.comparator(), "invalid comparator " + context);
     }
 
     protected static <E, S extends Collection<E>> S empty() {
@@ -110,7 +111,7 @@ public abstract class BaseSetTest extends BaseTest {
 
     protected <S extends Collection<Integer>> SetPair<Integer, S> pair(
             final List<Integer> elements,
-            final Comparator<? super Integer> comparator
+            final NamedComparator<? super Integer> comparator
     ) {
         return new SetPair<Integer, S>(elements, comparator, this::values);
     }
@@ -199,11 +200,11 @@ public abstract class BaseSetTest extends BaseTest {
                 final V value,
                 final R expected
         ) {
-            try {
-                Assert.assertEquals(null, expected, method.apply(tested, value));
-            } catch (final AssertionError e) {
-                throw new AssertionError(String.format(format, value) + " " + context + ": " + e.getMessage(), e);
-            }
+            Assertions.assertEquals(
+                    expected,
+                    method.apply(tested, value),
+                    () -> String.format(format, value) + " " + context
+            );
         }
 
         protected Collection<E> values() {
@@ -213,19 +214,17 @@ public abstract class BaseSetTest extends BaseTest {
         protected <R> void testGet(final String description, final Function<S, R> method) {
             try {
                 final R expected = method.apply(model);
-                try {
-                    Assert.assertEquals(description + context, expected, method.apply(tested));
-                } catch (final RuntimeException e) {
-                    Assert.fail(description + context + ": Unexpected exception " + e.getClass().getName() + ": " + e.getMessage());
-                }
+                final R actual = Assertions.assertDoesNotThrow(
+                        () -> method.apply(tested),
+                        () -> description + context + ": Unexpected exception "
+                );
+                Assertions.assertEquals(expected, actual, description + context);
             } catch (final RuntimeException ee) {
-                //noinspection CatchMayIgnoreException
-                try {
-                    method.apply(tested);
-                    Assert.fail(description + context + ": " + ee.getClass().getName() + " expected " + ee.getMessage());
-                } catch (final RuntimeException ae) {
-                    Assert.assertSame(description, ee.getClass(), ae.getClass());
-                }
+                Assertions.assertThrowsExactly(
+                        ee.getClass(),
+                        () -> method.apply(tested),
+                        () -> description + context + ": " + ee.getClass().getName() + " expected " + ee.getMessage()
+                );
             }
         }
 

@@ -3,7 +3,7 @@ package info.kgeorgiy.ja.dunaev.arrayset;
 import java.util.*;
 
 
-public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
+public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E>, List<E> {
     private final Comparator<? super E> comparator;
     private final List<E> storage;
     private final boolean isNaturalOrdered;
@@ -44,17 +44,37 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
 
     @Override
     public Iterator<E> iterator() {
-        return storage.iterator();
+        return listIterator();
     }
 
     @Override
-    public NavigableSet<E> descendingSet() {
+    public ListIterator<E> listIterator() {
+        return listIterator(0);
+    }
+
+    @Override
+    public ListIterator<E> listIterator(int index) {
+        return storage.listIterator(index);
+    }
+
+    @Override
+    public Spliterator<E> spliterator() {
+        return storage.spliterator();
+    }
+
+    @Override
+    public ArraySet<E> descendingSet() {
         return new ArraySet<>(this, storage.reversed(), comparator.reversed());
     }
 
     @Override
+    public ArraySet<E> reversed() {
+        return descendingSet();
+    }
+
+    @Override
     public Iterator<E> descendingIterator() {
-        return descendingSet().iterator();
+        return storage.reversed().iterator();
     }
 
     @Override
@@ -80,13 +100,45 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
     @Override
     public E first() {
         assertNotEmpty("Call \"first()\" on empty set");
-        return storage.getFirst();
+        return getFirst();
     }
 
     @Override
     public E last() {
         assertNotEmpty("Call \"last()\" on empty set");
+        return getLast();
+    }
+
+    @Override
+    public E getFirst() {
+        return storage.getFirst();
+    }
+
+    @Override
+    public E getLast() {
         return storage.getLast();
+    }
+
+    @Override
+    public E get(int index) {
+        return storage.get(index);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public int indexOf(Object o) {
+        int ind = binarySearch((E) o);
+        return ind >= 0 ? ind : -1;
+    }
+
+    @Override
+    public int lastIndexOf(Object o) {
+        return indexOf(o);
+    }
+
+    @Override
+    public List<E> subList(int fromIndex, int toIndex) {
+        return subView(fromIndex, toIndex);
     }
 
     @Override
@@ -121,16 +173,6 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
     @Override
     public SortedSet<E> tailSet(final E fromElement) {
         return tailSet(fromElement, true);
-    }
-
-    @Override
-    public E pollFirst() {
-        throw new UnsupportedOperationException("Unsupported operation \"pollFirst()\" on unmodifiable ArraySet");
-    }
-
-    @Override
-    public E pollLast() {
-        throw new UnsupportedOperationException("Unsupported operation \"pollLast()\" on unmodifiable ArraySet");
     }
 
     @Override
@@ -183,4 +225,55 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
                 this, from <= to ? storage.subList(from, to) : Collections.emptyList(), comparator
         );
     }
+
+    @Override
+    public boolean addAll(int index, Collection<? extends E> c) {
+        throw new UnsupportedOperationException("addAll() method is not allowed in this unmodifiable collection");
+    }
+
+    @Override
+    public E set(int index, E element) {
+        throw new UnsupportedOperationException("set() method is not allowed in this unmodifiable collection");
+    }
+
+    @Override
+    public void add(int index, E element) {
+        throw new UnsupportedOperationException("add() method is not allowed in this unmodifiable collection");
+    }
+
+    @Override
+    public E remove(int index) {
+        throw new UnsupportedOperationException("remove() method is not allowed in this unmodifiable collection");
+    }
+
+    @Override
+    public void addFirst(E e) {
+        throw new UnsupportedOperationException("addFirst() method is not allowed in this unmodifiable collection");
+    }
+
+    @Override
+    public void addLast(E e) {
+        throw new UnsupportedOperationException("addLast() method is not allowed in this unmodifiable collection");
+    }
+
+    @Override
+    public E removeFirst() {
+        throw new UnsupportedOperationException("Unsupported operation \"removeFirst()\" on unmodifiable ArraySet");
+    }
+
+    @Override
+    public E removeLast() {
+        throw new UnsupportedOperationException("Unsupported operation \"removeLast()\" on unmodifiable ArraySet");
+    }
+
+    @Override
+    public E pollFirst() {
+        throw new UnsupportedOperationException("Unsupported operation \"pollFirst()\" on unmodifiable ArraySet");
+    }
+
+    @Override
+    public E pollLast() {
+        throw new UnsupportedOperationException("Unsupported operation \"pollLast()\" on unmodifiable ArraySet");
+    }
+
 }

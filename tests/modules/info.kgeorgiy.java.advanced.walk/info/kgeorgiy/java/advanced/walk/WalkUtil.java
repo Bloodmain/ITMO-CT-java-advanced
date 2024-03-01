@@ -1,7 +1,8 @@
 package info.kgeorgiy.java.advanced.walk;
 
 import info.kgeorgiy.java.advanced.base.BaseTest;
-import org.junit.Assert;
+
+import org.junit.jupiter.api.Assertions;
 
 import java.io.File;
 import java.io.IOException;
@@ -149,15 +150,15 @@ public class WalkUtil {
         try {
             for (final String line : Files.readAllLines(outputFile, StandardCharsets.UTF_8)) {
                 final String[] parts = line.split(" ", 2);
-                Assert.assertEquals("Invalid line format\n" + line, 2, parts.length);
-                Assert.assertTrue("Unexpected file " + parts[1], hashes.containsKey(parts[1]));
-                Assert.assertEquals("Wrong hash for " + parts[1], hashes.remove(parts[1]), parts[0]);
+                Assertions.assertEquals(2, parts.length, "Invalid line format\n" + line);
+                Assertions.assertTrue(hashes.containsKey(parts[1]), "Unexpected file " + parts[1]);
+                Assertions.assertEquals(hashes.remove(parts[1]), parts[0], "Wrong hash for " + parts[1]);
             }
         } catch (final IOException e) {
             throw new AssertionError("Cannot read output file " + outputFile);
         }
 
-        Assert.assertTrue("Some files missing: \n    " + String.join("\n    ", hashes.keySet()), hashes.isEmpty());
+        Assertions.assertTrue(hashes.isEmpty(), "Some files missing: \n    " + String.join("\n    ", hashes.keySet()));
     }
 
     public void run(final String... args) {

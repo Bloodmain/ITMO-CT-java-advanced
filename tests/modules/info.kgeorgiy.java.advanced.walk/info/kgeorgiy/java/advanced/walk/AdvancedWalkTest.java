@@ -1,8 +1,5 @@
 package info.kgeorgiy.java.advanced.walk;
 
-import org.junit.FixMethodOrder;
-import org.junit.runners.MethodSorters;
-
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -15,9 +12,8 @@ import java.util.stream.Stream;
  * Tests for advanced version
  * of <a href="https://www.kgeorgiy.info/courses/java-advanced/homeworks.html#homework-walk">Walk</a> homework
  * for <a href="https://www.kgeorgiy.info/courses/java-advanced/">Java Advanced</a> course.
- * @author Georgiy Korneev (kgeorgiy@kgeorgiy.info) */
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
-
+ * @author Georgiy Korneev (kgeorgiy@kgeorgiy.info)
+ */
 public class AdvancedWalkTest extends RecursiveWalkTest {
     public AdvancedWalkTest() {
     }

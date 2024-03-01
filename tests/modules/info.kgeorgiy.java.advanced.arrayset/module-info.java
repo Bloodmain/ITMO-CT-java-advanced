@@ -5,11 +5,11 @@
  * @author Georgiy Korneev (kgeorgiy@kgeorgiy.info)
  */
 module info.kgeorgiy.java.advanced.arrayset {
-    requires transitive quickcheck;
+    requires quickcheck;
 
     requires transitive info.kgeorgiy.java.advanced.base;
 
     exports info.kgeorgiy.java.advanced.arrayset;
 
-    opens info.kgeorgiy.java.advanced.arrayset to junit;
+    opens info.kgeorgiy.java.advanced.arrayset to org.junit.platform.launcher;
 }
