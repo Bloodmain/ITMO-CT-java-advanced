@@ -27,6 +27,7 @@ public class StudentDB implements AdvancedQuery {
     public static final Comparator<Map.Entry<String, Integer>> COMPARE_OCCURRENCES_ASC_THAN_NAME =
             Map.Entry.<String, Integer>comparingByValue().reversed()
                     .thenComparing(Map.Entry.<String, Integer>comparingByKey().reversed());
+    public static final Comparator<Group> COMPARE_BY_GROUP_NAME = Comparator.comparing(Group::getName);
 
     private static String getFullName(Student student) {
         return student.getFirstName() + " " + student.getLastName();
@@ -151,7 +152,7 @@ public class StudentDB implements AdvancedQuery {
     private List<Group> getGroupsSorted(Collection<Student> students, Comparator<Student> comp) {
         return mapGroupSortedStudents(students, comp).entrySet().stream()
                 .map(entry -> new Group(entry.getKey(), entry.getValue()))
-                .sorted(Comparator.comparing(Group::getName))
+                .sorted(COMPARE_BY_GROUP_NAME)
                 .toList();
     }
 
