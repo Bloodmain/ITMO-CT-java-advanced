@@ -6,11 +6,12 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class StudentDB implements GroupQuery {
+public class StudentDB implements AdvancedQuery {
     private static final Comparator<Student> STUDENT_COMPARATOR = Comparator.comparing(Student::getLastName)
             .thenComparing(Student::getFirstName)
-            .thenComparingInt(Student::getId);
+            .thenComparing(Comparator.comparingInt(Student::getId).reversed());
 
     private static final Comparator<Group> GROUP_BY_STUDENT_SIZE_COMPARATOR =
             Comparator.comparing(Group::getStudents, Comparator.comparingInt(List::size))
@@ -19,6 +20,13 @@ public class StudentDB implements GroupQuery {
     private static final Comparator<Group> GROUP_BY_STUDENT_DISTINCT_NAMES_COMPARATOR =
             Comparator.comparing(Group::getStudents, Comparator.comparingLong(StudentDB::getDistinctNamesCount))
                     .thenComparing(Comparator.comparing(Group::getName).reversed());
+    public static final Comparator<Map.Entry<String, Integer>> COMPARE_OCCURRENCES_DESC_THAN_NAME =
+            Map.Entry.<String, Integer>comparingByValue()
+                    .thenComparing(Map.Entry.<String, Integer>comparingByKey().reversed());
+
+    public static final Comparator<Map.Entry<String, Integer>> COMPARE_OCCURRENCES_ASC_THAN_NAME =
+            Map.Entry.<String, Integer>comparingByValue().reversed()
+                    .thenComparing(Map.Entry.<String, Integer>comparingByKey().reversed());
 
     private static String getFullName(Student student) {
         return student.getFirstName() + " " + student.getLastName();
@@ -58,8 +66,7 @@ public class StudentDB implements GroupQuery {
 
     @Override
     public String getMaxStudentFirstName(List<Student> students) {
-        // TODO is it null?
-        return maxMapOrElse(students, Student::compareTo, Student::getFirstName, null);
+        return maxMapOrElse(students, Student::compareTo, Student::getFirstName, "");
     }
 
     @Override
@@ -123,16 +130,18 @@ public class StudentDB implements GroupQuery {
                 .toList();
     }
 
+    private List<Student> streamSortBy(Stream<Student> studentStream, Comparator<Student> comp) {
+        return studentStream.sorted(comp).toList();
+    }
+
     private List<Student> sortBy(Collection<Student> students, Comparator<Student> comp) {
-        return students.stream()
-                .sorted(comp)
-                .toList();
+        return streamSortBy(students.stream(), comp);
     }
 
     private <T> List<Student> findBy(Collection<Student> students, Function<Student, T> keyExtractor, T objToCompare) {
-        return sortBy(students, STUDENT_COMPARATOR).stream()
-                .filter(s -> keyExtractor.apply(s).equals(objToCompare))
-                .toList();
+        return streamSortBy(students.stream()
+                        .filter(s -> keyExtractor.apply(s).equals(objToCompare)),
+                STUDENT_COMPARATOR);
     }
 
     private Map<GroupName, List<Student>> mapGroupSortedStudents(Collection<Student> students, Comparator<Student> comp) {
@@ -160,5 +169,58 @@ public class StudentDB implements GroupQuery {
                 .max(maxBy)
                 .map(mapper)
                 .orElse(defaultValue);
+    }
+
+    @Override
+    public String getMostPopularName(Collection<Student> students) {
+        return getNameByOccurrences(students, COMPARE_OCCURRENCES_DESC_THAN_NAME);
+    }
+
+    @Override
+    public String getLeastPopularName(Collection<Student> students) {
+        return getNameByOccurrences(students, COMPARE_OCCURRENCES_ASC_THAN_NAME);
+    }
+
+    private String getNameByOccurrences(Collection<Student> students, Comparator<Map.Entry<String, Integer>> maxBy) {
+        return maxMapOrElse(
+                countStudentNameOccurrences(students).entrySet(),
+                maxBy,
+                Map.Entry::getKey,
+                ""
+        );
+    }
+
+    private Map<String, Integer> countStudentNameOccurrences(Collection<Student> students) {
+        return recollect(students, Collectors.groupingBy(Student::getFirstName,
+                Collectors.collectingAndThen(
+                        Collectors.mapping(Student::getGroup, Collectors.toSet()),
+                        Set::size)));
+    }
+
+    @Override
+    public List<String> getFirstNames(Collection<Student> students, int[] indices) {
+        return getByIds(students, indices, Student::getFirstName);
+    }
+
+    @Override
+    public List<String> getLastNames(Collection<Student> students, int[] indices) {
+        return getByIds(students, indices, Student::getLastName);
+    }
+
+    @Override
+    public List<GroupName> getGroups(Collection<Student> students, int[] indices) {
+        return getByIds(students, indices, Student::getGroup);
+    }
+
+    @Override
+    public List<String> getFullNames(Collection<Student> students, int[] indices) {
+        return getByIds(students, indices, StudentDB::getFullName);
+    }
+
+    private <R> List<R> getByIds(Collection<Student> students, int[] indices, Function<Student, R> mapper) {
+        return Arrays.stream(indices)
+                .mapToObj(recollect(students, Collectors.toList())::get)
+                .map(mapper)
+                .toList();
     }
 }

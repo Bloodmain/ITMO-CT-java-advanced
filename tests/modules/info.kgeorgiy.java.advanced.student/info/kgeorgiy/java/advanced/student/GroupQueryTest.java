@@ -2,9 +2,7 @@ package info.kgeorgiy.java.advanced.student;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Function;
+import java.util.*;
 
 /**
  * Tests for hard version
@@ -13,7 +11,7 @@ import java.util.function.Function;
  *
  * @author Georgiy Korneev (kgeorgiy@kgeorgiy.info)
  */
-public class GroupQueryTest extends StudentQueryTest {
+public class GroupQueryTest extends StudentQueryTest implements GroupQuery {
     private final GroupQuery db = createCUT();
 
     public GroupQueryTest() {
@@ -21,44 +19,76 @@ public class GroupQueryTest extends StudentQueryTest {
 
     @Test
     public void test21_testGetGroupsByName() {
-        testGroups(db::getGroupsByName, new int[][]{{0}, {0, 1}, {0, 2, 1}});
+        test(this::getGroupsByName, db::getGroupsByName);
     }
 
     @Test
     public void test22_testGetGroupsById() {
-        testGroups(db::getGroupsById, new int[][]{{0}, {0, 1}, {0, 2, 1}});
+        test(this::getGroupsById, db::getGroupsById);
     }
 
     @Test
     public void test23_testGetLargestGroup() {
-        testString(db::getLargestGroup, "M3238", "M3239", "M3238");
+        test(this::getLargestGroup, db::getLargestGroup);
     }
 
     @Test
     public void test24_testGetLargestGroupByFirstName() {
-        testString(db::getLargestGroupFirstName, "M3238", "M3238", "M3238");
+        test(this::getLargestGroupFirstName, db::getLargestGroupFirstName);
     }
 
-    private void testGroups(final Function<List<Student>, List<Group>> query, final int[]... answers) {
-        test(query, GroupQueryTest::groups, answers);
+    // Reference implementation follows
+    // This implementation is intentionally poorly-written and contains a lot of copy-and-paste
+
+    @Override
+    public List<Group> getGroupsByName(final Collection<Student> students) {
+        final SortedMap<GroupName, Group> groups = new TreeMap<>();
+        for (final Student student : students) {
+            groups.computeIfAbsent(student.getGroup(), group -> new Group(group, findStudentsByGroup(students, group)));
+        }
+        return List.copyOf(groups.values());
     }
 
-    public static List<Group> groups(final List<Student> students, final int[] answer) {
-        GroupName group = null;
-        List<Student> groupStudents = new ArrayList<>();
-        final List<Group> groups = new ArrayList<>();
+    @Override
+    public List<Group> getGroupsById(final Collection<Student> students) {
+        final SortedMap<GroupName, Group> groups = new TreeMap<>();
+        for (final Student student : students) {
+            groups.computeIfAbsent(student.getGroup(), group -> {
+                final ArrayList<Student> result = new ArrayList<>(students);
+                result.removeIf(s -> !s.getGroup().equals(group));
+                Collections.sort(result);
+                return new Group(group, result);
+            });
+        }
+        return List.copyOf(groups.values());
+    }
 
-        for (final Student student : getStudents(students, answer)) {
-            if (group != null && !group.equals(student.getGroup())) {
-                groups.add(new Group(group, groupStudents));
-                groupStudents = new ArrayList<>();
+    @Override
+    public GroupName getLargestGroup(final Collection<Student> students) {
+        int maxSize = -1;
+        GroupName name = null;
+        for (final Group group : getGroupsByName(students)) {
+            final int size = group.getStudents().size();
+            if (maxSize < size || maxSize == size && name.compareTo(group.getName()) < 0) {
+                maxSize = size;
+                name = group.getName();
             }
-            group = student.getGroup();
-            groupStudents.add(student);
         }
-        if (!groupStudents.isEmpty()) {
-            groups.add(new Group(group, groupStudents));
+        return name;
+    }
+
+    @Override
+    public GroupName getLargestGroupFirstName(final Collection<Student> students) {
+        int maxSize = -1;
+        GroupName name = null;
+        for (final Group group : getGroupsByName(students)) {
+            final Set<String> firstNames = new HashSet<>();
+            group.getStudents().forEach(student -> firstNames.add(student.getFirstName()));
+            if (maxSize < firstNames.size() || maxSize == firstNames.size() && name.compareTo(group.getName()) > 0) {
+                maxSize = firstNames.size();
+                name = group.getName();
+            }
         }
-        return groups;
+        return name;
     }
 }

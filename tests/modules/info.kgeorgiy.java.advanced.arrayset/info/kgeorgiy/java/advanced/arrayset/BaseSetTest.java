@@ -21,13 +21,14 @@ import static net.java.quickcheck.generator.PrimitiveGenerators.integers;
  * @author Georgiy Korneev (kgeorgiy@kgeorgiy.info)
  */
 public abstract class BaseSetTest extends BaseTest {
-    protected static final List<NamedComparator<Integer>> NAMED_COMPARATORS = new ArrayList<>(List.of(
+    protected static final List<NamedComparator<Integer>> NAMED_COMPARATORS = new ArrayList<>(Arrays.asList(
             comparator("Natural order", Integer::compare),
             comparator("Reverse order", Comparator.comparingInt(Integer::intValue).reversed()),
             comparator("Div 128", Comparator.comparingInt(i -> i >> 7)),
             comparator("Mod 1024", Comparator.comparingInt(i -> i & 1023)),
             comparator("Even first", Comparator.<Integer>comparingInt(i -> i % 2).thenComparing(Integer::intValue)),
-            comparator("All equal", Comparator.comparingInt(i -> 0))
+            comparator("All equal", Comparator.comparingInt(i -> 0)),
+            null
     ));
 
     protected BaseSetTest() {
@@ -200,11 +201,15 @@ public abstract class BaseSetTest extends BaseTest {
                 final V value,
                 final R expected
         ) {
-            Assertions.assertEquals(
-                    expected,
-                    method.apply(tested, value),
-                    () -> String.format(format, value) + " " + context
-            );
+            final R actual = method.apply(tested, value);
+            Assertions.assertEquals(expected, actual, () -> String.format(format, value) + " " + context);
+            if (expected instanceof SortedSet) {
+                Assertions.assertEquals(
+                        ((SortedSet<?>) expected).comparator(),
+                        ((SortedSet<?>) actual).comparator(),
+                        () -> String.format(format, value) + " " + context + " .comparator()"
+                );
+            }
         }
 
         protected Collection<E> values() {

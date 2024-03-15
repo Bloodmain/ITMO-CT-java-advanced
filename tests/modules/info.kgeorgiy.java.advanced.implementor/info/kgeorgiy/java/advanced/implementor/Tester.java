@@ -1,4 +1,4 @@
-package info.kgeorgiy.java.advanced.student;
+package info.kgeorgiy.java.advanced.implementor;
 
 import info.kgeorgiy.java.advanced.base.BaseTester;
 
@@ -11,9 +11,8 @@ public final class Tester {
 
     public static void main(final String... args) {
         new BaseTester()
-                .add("StudentQuery", StudentQueryTest.class)
-                .add("GroupQuery", GroupQueryTest.class)
-                .add("AdvancedQuery", AdvancedQueryTest.class)
+                .add("interface", InterfaceImplementorTest.class)
+                .add("class", ClassImplementorTest.class)
                 .run(args);
     }
 }
