@@ -17,7 +17,6 @@ public class BaseTest {
     public static final String CUT_PROPERTY = "cut";
 
     protected String testName;
-    private long testStartTime;
 
     public BaseTest() {
     }

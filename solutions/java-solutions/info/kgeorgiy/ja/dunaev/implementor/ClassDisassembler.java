@@ -14,6 +14,8 @@ public class ClassDisassembler {
     private static final Map<Predicate<Class<?>>, String> BASE_IMPLEMENTABILITY_TESTS = Map.of(
             Class::isPrimitive, "Can't implement primitive type",
             Class::isArray, "Can't implement array type",
+            Class::isSealed, "Can't implement sealed token",
+            token -> token.isAssignableFrom(Record.class), "Can't implement record",
             token -> token.isAssignableFrom(Enum.class), "Can't implement enum",
             token -> Modifier.isFinal(token.getModifiers()), "Can't implement final typeToken",
             token -> Modifier.isPrivate(token.getModifiers()), "Can't implement private typeToken"
@@ -32,7 +34,7 @@ public class ClassDisassembler {
                 .map(ConstructorCodeGenerator::new)
                 .orElse(null);
 
-        Stream<MethodCodeGenerator> stream = findMethodsToImplement(token.getMethods());
+        Stream<MethodCodeGenerator> stream = findMethodsToImplement(token.getMethods()); // including methods from interfaces
         for (Class<?> superclassToken = token; superclassToken != null; superclassToken = superclassToken.getSuperclass()) {
             stream = Stream.concat(stream, findMethodsToImplement(superclassToken.getDeclaredMethods()));
         }
@@ -45,7 +47,14 @@ public class ClassDisassembler {
 
     private Stream<MethodCodeGenerator> findMethodsToImplement(Method[] methods) {
         return Arrays.stream(methods)
-                .map(MethodCodeGenerator::new);
+                .map(MethodCodeGenerator::new)
+                .collect(Collectors.groupingBy(
+                        Function.identity(),
+                        Collectors.collectingAndThen(
+                                Collectors.minBy(MethodCodeGenerator.BY_NARROWER_RETURN_TYPE_COMPARATOR),
+                                Optional::orElseThrow
+                        )
+                )).values().stream();
     }
 
     private void assertImplementable() throws ImplerException {

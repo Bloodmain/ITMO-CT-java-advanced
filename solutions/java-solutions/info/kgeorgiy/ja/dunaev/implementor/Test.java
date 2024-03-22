@@ -1,7 +1,7 @@
 package info.kgeorgiy.ja.dunaev.implementor;
 
 import info.kgeorgiy.java.advanced.implementor.ImplerException;
-import info.kgeorgiy.java.advanced.implementor.basic.interfaces.standard.Logger;
+import info.kgeorgiy.java.advanced.implementor.basic.classes.AbstractClassWithInterface;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -33,7 +33,7 @@ public class Test {
         } catch (IOException e) {
             System.out.println("Can't delete: " + e.getMessage());
         }
-        Class<?> token = Logger.class;
+        Class<?> token = A.B.class;
 
         try {
             implementor.implement(token, p);
