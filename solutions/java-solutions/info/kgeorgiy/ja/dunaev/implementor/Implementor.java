@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.CodeSource;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.jar.Attributes;
@@ -78,7 +79,11 @@ public class Implementor implements JarImpler {
 
     private static String getClassPath(Class<?> token) throws ImplerException {
         try {
-            return Path.of(token.getProtectionDomain().getCodeSource().getLocation().toURI()).toString();
+            CodeSource source = token.getProtectionDomain().getCodeSource();
+            if (source == null) {
+                return "";
+            }
+            return Path.of(source.getLocation().toURI()).toString();
         } catch (final URISyntaxException e) {
             throw new ImplerException("Can't get classpath", e);
         }

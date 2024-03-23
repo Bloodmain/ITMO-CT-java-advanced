@@ -1,0 +1,3 @@
+Manifest-Version: 1.0
+Main-Class: info.kgeorgiy.ja.dunaev.implementor.Implementor
+Created-By: Dunaev Kirill
