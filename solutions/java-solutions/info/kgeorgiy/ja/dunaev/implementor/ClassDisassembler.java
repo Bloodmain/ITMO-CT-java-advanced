@@ -10,7 +10,16 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Class that disassembly the given {@code token}. Checks if the {@code token} can be implemented.
+ *
+ * @author Dunaev Kirill
+ * @see Implementor
+ */
 public class ClassDisassembler {
+    /**
+     * Base tests for checks if the {@link ClassDisassembler#token} can be implemented.
+     */
     private static final Map<Predicate<Class<?>>, String> BASE_IMPLEMENTABILITY_TESTS = Map.of(
             Class::isPrimitive, "Can't implement primitive type",
             Class::isArray, "Can't implement array type",
@@ -21,10 +30,27 @@ public class ClassDisassembler {
             token -> Modifier.isPrivate(token.getModifiers()), "Can't implement private typeToken"
     );
 
+    /**
+     * The {@code token} to implement.
+     */
     private final Class<?> token;
+
+    /**
+     * Any non-private constructor of the {@link ClassDisassembler#token}
+     */
     private final ConstructorCodeGenerator nonPrivateCtor;
+
+    /**
+     * All methods of {@link ClassDisassembler#token} that should be implemented (abstract and not implemented already).
+     */
     private final List<MethodCodeGenerator> methodsToImplement;
 
+    /**
+     * Constructor that collects all needed information about {@code token}.
+     *
+     * @param token {@code token} to be disassembled
+     * @throws ImplerException if {@code token} can't be implemented
+     */
     public ClassDisassembler(final Class<?> token) throws ImplerException {
         this.token = token;
 
@@ -45,6 +71,14 @@ public class ClassDisassembler {
         assertImplementable();
     }
 
+    /**
+     * Filters the methods leaving only those, who needs to be implemented.
+     * If there are more than one method with same signature, then leaves the method with narrower return type
+     * (as for {@link MethodCodeGenerator#BY_NARROWER_RETURN_TYPE_COMPARATOR})
+     *
+     * @param methods methods to filter
+     * @return stream of wrapped by {@link MethodCodeGenerator} methods which needs to be implemented
+     */
     private Stream<MethodCodeGenerator> findMethodsToImplement(Method[] methods) {
         return Arrays.stream(methods)
                 .map(MethodCodeGenerator::new)
@@ -57,6 +91,11 @@ public class ClassDisassembler {
                 )).values().stream();
     }
 
+    /**
+     * Checks if the {@link ClassDisassembler#token} can be implemented.
+     *
+     * @throws ImplerException if the token can't be implemented.
+     */
     private void assertImplementable() throws ImplerException {
         final Optional<String> failedMessage = BASE_IMPLEMENTABILITY_TESTS.entrySet().stream()
                 .filter(entry -> entry.getKey().test(token))
@@ -83,6 +122,11 @@ public class ClassDisassembler {
         }
     }
 
+    /**
+     * Generates code of the {@link ClassDisassembler#token} implementation.
+     *
+     * @return generated code of the {@link ClassDisassembler#token} implementation.
+     */
     public String generateCode() {
         return ClassCodeGenerator.generateCode(token, nonPrivateCtor, methodsToImplement);
     }

@@ -7,9 +7,28 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Class to generate code of provided {@link Executable}.
+ *
+ * @author Dunaev Kirill
+ */
 public class ExecutableCodeGenerator {
-    private static final String TABULATION = " ".repeat(4);
+    /**
+     * Default constructor that does nothing.
+     */
+    public ExecutableCodeGenerator() {
+    }
 
+    /**
+     * Generates code of an executable.
+     *
+     * @param executable    executable, whose code should be generated
+     * @param isOverridable if the executable should be marked with {@code @Override} annotation
+     * @param name          name of the executable
+     * @param returnType    name of the returned type of this executable
+     * @param content       content that will be places inside the executable
+     * @return generated code
+     */
     public static String generateCode(
             final Executable executable, boolean isOverridable,
             final String name, final String returnType, final String content
@@ -31,24 +50,38 @@ public class ExecutableCodeGenerator {
 
         String override = "";
         if (isOverridable) {
-            override = String.format("%s@Override%n", TABULATION);
+            override = String.format("%s@Override%n", ClassCodeGenerator.TABULATION);
         }
         return String.format("%s%s%s(%s)%s {%n%s%s%n%s}%n",
                 override,
-                TABULATION,
+                ClassCodeGenerator.TABULATION,
                 header,
                 parameters,
                 exceptions,
-                TABULATION.repeat(2),
+                ClassCodeGenerator.TABULATION.repeat(2),
                 content,
-                TABULATION
+                ClassCodeGenerator.TABULATION
         );
     }
 
+    /**
+     * Makes provided {@link Modifier} non-abstract and non-transient.
+     *
+     * @param mod modifiers to change
+     * @return changed modifier
+     */
     private static int makeNotAbstract(int mod) {
         return mod & ~Modifier.ABSTRACT & ~Modifier.TRANSIENT;
     }
 
+    /**
+     * Maps the given array and join it with comma.
+     *
+     * @param arr    an array to process
+     * @param mapper map function
+     * @param <T>    array element's type
+     * @return joined string
+     */
     public static <T> String mapAndCommaJoin(T[] arr, Function<T, String> mapper) {
         return Arrays.stream(arr)
                 .map(mapper)

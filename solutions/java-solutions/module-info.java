@@ -1,3 +1,9 @@
+/**
+ * Java advanced solutions module. Module contains solutions for homeworks for
+ * <a href=https://www.kgeorgiy.info/courses/java-advanced/homeworks.html>Java advanced</a> course in ITMO.
+ *
+ * @author Dunaev Kirill
+ */
 module info.kgeorgiy.dunaev.ja {
     requires info.kgeorgiy.java.advanced.walk;
     requires info.kgeorgiy.java.advanced.arrayset;
