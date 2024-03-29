@@ -16,6 +16,7 @@ public final class Tester {
                 .add("advanced", AdvancedImplementorTest.class)
                 .add("jar-interface", InterfaceJarImplementorTest.class)
                 .add("jar-class", ClassJarImplementorTest.class)
+                .add("jar-advanced", AdvancedJarImplementorTest.class)
                 .run(args);
     }
 }

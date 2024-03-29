@@ -56,6 +56,7 @@ public class ClassDisassembler {
 
         nonPrivateCtor = Arrays.stream(token.getDeclaredConstructors())
                 .filter(ctor -> !Modifier.isPrivate(ctor.getModifiers()))
+                .filter(ctor -> Arrays.stream(ctor.getParameterTypes()).noneMatch(type -> Modifier.isPrivate(type.getModifiers())))
                 .findAny()
                 .map(ConstructorCodeGenerator::new)
                 .orElse(null);

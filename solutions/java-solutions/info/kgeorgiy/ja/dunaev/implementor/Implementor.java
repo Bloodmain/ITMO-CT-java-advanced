@@ -200,7 +200,7 @@ public class Implementor implements JarImpler {
 
     @Override
     public void implementJar(final Class<?> token, final Path jarFile) throws ImplerException {
-        Path tmpDir = Path.of("./temp");
+        Path tmpDir = Path.of(".", "temp");
         try {
             Files.createDirectory(tmpDir);
         } catch (final IOException e) {
@@ -215,17 +215,13 @@ public class Implementor implements JarImpler {
 
         createParents(jarFile);
         try (JarOutputStream jarOutputStream = new JarOutputStream(Files.newOutputStream(jarFile), manifest)) {
-            try (InputStream classStream = Files.newInputStream(resolveTokenPath(tmpDir, token, CLASS_FILE_EXT))) {
-                try {
-                    JarEntry entry = new JarEntry(getImplName(token, JAR_PACKAGES_SEPARATOR, CLASS_FILE_EXT));
-                    jarOutputStream.putNextEntry(entry);
-                    classStream.transferTo(jarOutputStream);
-                    jarOutputStream.closeEntry();
-                } catch (final IOException e) {
-                    throw new ImplerException("Error while writing to jar file", e);
-                }
+            try {
+                JarEntry entry = new JarEntry(getImplName(token, JAR_PACKAGES_SEPARATOR, CLASS_FILE_EXT));
+                jarOutputStream.putNextEntry(entry);
+                Files.copy(resolveTokenPath(tmpDir, token, CLASS_FILE_EXT), jarOutputStream);
+                jarOutputStream.closeEntry();
             } catch (final IOException e) {
-                throw new ImplerException("Can't open created .class file", e);
+                throw new ImplerException("Error while writing to jar file", e);
             }
         } catch (final IOException e) {
             throw new ImplerException("Can't open jar file to write", e);

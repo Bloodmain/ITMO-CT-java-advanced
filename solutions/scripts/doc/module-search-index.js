@@ -1,1 +1,1 @@
-moduleSearchIndex = [];updateSearchResults();
+moduleSearchIndex = [{"l":"info.kgeorgiy.ja.dunaev"},{"l":"info.kgeorgiy.java.advanced.arrayset"},{"l":"info.kgeorgiy.java.advanced.base"},{"l":"info.kgeorgiy.java.advanced.implementor"},{"l":"info.kgeorgiy.java.advanced.student"},{"l":"info.kgeorgiy.java.advanced.walk"}];updateSearchResults();
