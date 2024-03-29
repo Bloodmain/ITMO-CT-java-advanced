@@ -7,6 +7,7 @@ import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 import java.io.*;
 import java.net.URISyntaxException;
+import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -18,6 +19,7 @@ import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 
 /**
  * Implementation of {@link JarImpler} interface. Contains methods for implementing provided type {@code token}.
@@ -42,6 +44,14 @@ public class Implementor implements JarImpler {
      * Separator for packages in jar files.
      */
     private static final String JAR_PACKAGES_SEPARATOR = "/";
+    /**
+     * Unicode format for mapping non-ascii characters.
+     */
+    private static final String UNICODE_FORMAT = "\\u%04x";
+    /**
+     * Unicode encoder, that checks whether the character can be represented as ASC-II
+     */
+    private static final CharsetEncoder ASCII_ENCODER = StandardCharsets.US_ASCII.newEncoder();
 
     /**
      * Default constructor.
@@ -110,6 +120,21 @@ public class Implementor implements JarImpler {
         return root.resolve(getImplName(token, File.separator, extension));
     }
 
+    /**
+     * Maps non-ascii characters of the string to its unicode representation.
+     * I.e. maps to the \\u + hex representation of a char
+     *
+     * @param str string to encode
+     * @return encoded string
+     */
+    private static String encode(final String str) {
+        return str.chars()
+                .mapToObj(ch -> ASCII_ENCODER.canEncode((char) ch) ?
+                        String.valueOf((char) ch) :
+                        String.format(UNICODE_FORMAT, ch))
+                .collect(Collectors.joining());
+    }
+
     @Override
     public void implement(final Class<?> token, final Path root) throws ImplerException {
         ClassDisassembler classDisassembler = new ClassDisassembler(token);
@@ -118,7 +143,7 @@ public class Implementor implements JarImpler {
         createParents(path);
         try (final BufferedWriter writer = Files.newBufferedWriter(path)) {
             try {
-                writer.write(classDisassembler.generateCode());
+                writer.write(encode(classDisassembler.generateCode()));
             } catch (final IOException e) {
                 throw new ImplerException("Exception while writing to a file", e);
             }
@@ -195,6 +220,7 @@ public class Implementor implements JarImpler {
                     JarEntry entry = new JarEntry(getImplName(token, JAR_PACKAGES_SEPARATOR, CLASS_FILE_EXT));
                     jarOutputStream.putNextEntry(entry);
                     classStream.transferTo(jarOutputStream);
+                    jarOutputStream.closeEntry();
                 } catch (final IOException e) {
                     throw new ImplerException("Error while writing to jar file", e);
                 }

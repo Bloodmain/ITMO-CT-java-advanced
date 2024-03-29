@@ -1,9 +1,12 @@
 package info.kgeorgiy.java.advanced.implementor;
 
+import info.kgeorgiy.java.advanced.implementor.full.lang.*;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,6 +24,11 @@ public class InterfaceJarImplementorTest extends InterfaceImplementorTest {
         assertConstructor(Impler.class, JarImpler.class);
     }
 
+    @Test
+    public void test09_encoding() {
+        testOk(\u041f\u0440\u0438\u0432\u0435\u0442Interface.class);
+    }
+
     @Override
     protected void implement(final Path root, final Impler implementor, final Class<?> clazz) throws ImplerException {
         super.implement(root, implementor, clazz);
@@ -34,7 +42,7 @@ public class InterfaceJarImplementorTest extends InterfaceImplementorTest {
         try (final URLClassLoader classLoader = getClassLoader(jarFile)) {
             check(classLoader, clazz);
         } catch (final IOException e) {
-            e.printStackTrace();
+            throw new UncheckedIOException(e);
         }
     }
 }
