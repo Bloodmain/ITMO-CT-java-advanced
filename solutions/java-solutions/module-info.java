@@ -1,6 +1,7 @@
 /**
  * Java advanced solutions module. Module contains solutions for homeworks for
- * <a href=https://www.kgeorgiy.info/courses/java-advanced/homeworks.html>Java advanced</a> course in ITMO.
+ * <a href=https://www.kgeorgiy.info/courses/java-advanced/homeworks.html>Java advanced</a> course at
+ * <a href=https://itmo.ru>ITMO university</a>.
  *
  * @author Dunaev Kirill
  */

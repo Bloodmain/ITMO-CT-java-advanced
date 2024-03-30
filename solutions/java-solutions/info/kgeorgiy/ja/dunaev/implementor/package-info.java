@@ -1,7 +1,6 @@
 /**
- * Implementor package.
- * Contains solution for <a href=https://www.kgeorgiy.info/courses/java-advanced/homeworks.html#implementor>implementor</a> homework:
- * {@link info.kgeorgiy.ja.dunaev.implementor.Implementor} class and some helper classes.
+ * Solution for <a href=https://www.kgeorgiy.info/courses/java-advanced/homeworks.html#implementor>implementor</a> homework.
+ * Contains {@link info.kgeorgiy.ja.dunaev.implementor.Implementor} class and some helper classes.
  *
  * @author Dunaev Kirill
  */
