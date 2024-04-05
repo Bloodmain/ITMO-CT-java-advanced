@@ -13,6 +13,9 @@ public final class Tester {
         new BaseTester()
                 .add("scalar", ScalarIPTest.class)
                 .add("list", ListIPTest.class)
+                .add("new-scalar", NewScalarIPTest.class)
+                .add("new-list", NewListIPTest.class)
+                .add("advanced", AdvancedIPTest.class)
                 .run(args);
     }
 }

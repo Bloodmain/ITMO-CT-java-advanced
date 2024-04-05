@@ -15,47 +15,47 @@ import java.util.stream.Collectors;
  *
  * @author Georgiy Korneev (kgeorgiy@kgeorgiy.info)
  */
-public class ListIPTest<P extends ListIP> extends ScalarIPTest<P> {
-    public ListIPTest() {
+public class NewListIPTest<P extends NewListIP> extends NewScalarIPTest<P> {
+    public NewListIPTest() {
     }
 
     @Test
     public void test12_sleepPerformance() throws InterruptedException {
         testPerformance("filter", MAX_THREADS, 5, 0, 1.5, (instance, threads, values) ->
-                instance.filter(threads, values, v -> sleep(v % 3 == 1)));
+                instance.filter(threads, values, v -> sleep(v % 3 == 1), 1));
         testPerformance("map", MAX_THREADS, 5, 0, 1.5, (instance, threads, values) ->
-                instance.map(threads, values, v -> sleep(v + 10)));
+                instance.map(threads, values, v -> sleep(v + 10), 1));
     }
 
     @Test
     public void test51_join() throws InterruptedException {
-        testS(
+        testStepS(
                 (data, ignore) -> data.map(Object::toString).collect(Collectors.joining()),
-                (i, t, d, v) -> i.join(t, d),
+                (i, t, d, v, s) -> i.join(t, d, s),
                 UNIT
         );
     }
 
     @Test
     public void test52_filter() throws InterruptedException {
-        testS(
+        testStepS(
                 (data, predicate) -> data.filter(predicate).toList(),
-                ListIP::filter,
+                NewListIP::filter,
                 PREDICATES
         );
     }
 
     @Test
     public void test53_map() throws InterruptedException {
-        testS((data, f) -> data.map(f).toList(), ListIP::map, FUNCTIONS);
+        testStepS((data, f) -> data.map(f).toList(), NewListIP::map, FUNCTIONS);
     }
 
     @Test
     public void test54_mapMaximum() throws InterruptedException {
-        testS(
+        testStepS(
                 (data, f) -> data.map(f).map(Objects::toString).max(Comparator.naturalOrder()),
-                (instance, threads, data, f) -> {
-                    final List<String> mapped = instance.map(threads, data, f.andThen(Objects::toString));
+                (instance, threads, data, f, step) -> {
+                    final List<String> mapped = instance.map(threads, data, f.andThen(Objects::toString), step);
                     return Optional.of(instance.maximum(threads, mapped, Comparator.naturalOrder()));
                 },
                 FUNCTIONS
