@@ -6,7 +6,7 @@ package info.kgeorgiy.ja.dunaev.mapper;
  * @author Dunaev Kirill
  */
 public class RuntimeExceptionsManager {
-    RuntimeException ex;
+    private RuntimeException ex;
 
     /**
      * Creates manager with empty exception.

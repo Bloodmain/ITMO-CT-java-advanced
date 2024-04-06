@@ -1,6 +1,5 @@
 package info.kgeorgiy.ja.dunaev.mapper;
 
-import info.kgeorgiy.ja.dunaev.iterative.IterativeParallelism;
 import info.kgeorgiy.java.advanced.mapper.ParallelMapper;
 
 import java.util.ArrayList;
@@ -42,7 +41,7 @@ public class ParallelMapperImpl implements ParallelMapper {
 
     @Override
     public <T, R> List<R> map(Function<? super T, ? extends R> f, List<? extends T> args) throws InterruptedException {
-        WaitCounter counter = new WaitCounter(args.size());
+        WaitGroup waitGroup = new WaitGroup(args.size());
         RuntimeExceptionsManager exceptionsManager = new RuntimeExceptionsManager();
 
         final List<R> result = new ArrayList<>(Collections.nCopies(args.size(), null));
@@ -53,11 +52,11 @@ public class ParallelMapperImpl implements ParallelMapper {
                             } catch (final RuntimeException e) {
                                 exceptionsManager.addException(e);
                             }
-                            counter.decrement();
+                            waitGroup.done();
                         }
                 ));
 
-        counter.waitForZero();
+        waitGroup.waitForZero();
         return exceptionsManager.ifNoExceptions(result);
     }
 
@@ -65,7 +64,7 @@ public class ParallelMapperImpl implements ParallelMapper {
     public void close() {
         threadPool.forEach(Thread::interrupt);
         try {
-            IterativeParallelism.join(threadPool);
+            IterativeParallelism.joinThreads(threadPool);
         } catch (final InterruptedException ignored) {
         }
     }

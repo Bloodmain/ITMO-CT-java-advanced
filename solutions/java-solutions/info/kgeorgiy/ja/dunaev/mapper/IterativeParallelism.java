@@ -2,17 +2,23 @@ package info.kgeorgiy.ja.dunaev.mapper;
 
 import info.kgeorgiy.java.advanced.mapper.ParallelMapper;
 
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
 /**
- * Copy of the {@link info.kgeorgiy.ja.dunaev.iterative.IterativeParallelism} for {@link info.kgeorgiy.ja.dunaev.mapper} package.
+ * Extension of {@link info.kgeorgiy.ja.dunaev.iterative.IterativeParallelism} for using {@link ParallelMapper}.
  *
  * @author Dunaev Kirill
  */
 public class IterativeParallelism extends info.kgeorgiy.ja.dunaev.iterative.IterativeParallelism {
+    private final ParallelMapper mapper;
+
     /**
      * Constructs class that will create threads itself.
      */
     public IterativeParallelism() {
-        super();
+        mapper = null;
     }
 
     /**
@@ -22,6 +28,17 @@ public class IterativeParallelism extends info.kgeorgiy.ja.dunaev.iterative.Iter
      * @param mapper mapper that will be used
      */
     public IterativeParallelism(ParallelMapper mapper) {
-        super(mapper);
+        this.mapper = mapper;
+    }
+
+    @Override
+    protected <T, R> List<R> runInParallel(
+            Function<? super Stream<T>, R> processor,
+            List<Stream<T>> segments
+    ) throws InterruptedException {
+        if (mapper != null) {
+            return mapper.map(processor, segments);
+        }
+        return super.runInParallel(processor, segments);
     }
 }

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-CURRENT_DIR="$(pwd)"
+CURRENT_DIR="$(dirname "$(readlink -f "$0")")"
 PROJECT_PATH="$CURRENT_DIR/../.."
 SOLUTIONS_PATH="$PROJECT_PATH/solutions/java-solutions"
 TESTS_PATH="$PROJECT_PATH/tests"

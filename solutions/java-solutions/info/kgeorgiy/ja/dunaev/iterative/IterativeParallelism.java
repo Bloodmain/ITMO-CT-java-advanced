@@ -1,7 +1,6 @@
 package info.kgeorgiy.ja.dunaev.iterative;
 
 import info.kgeorgiy.java.advanced.iterative.AdvancedIP;
-import info.kgeorgiy.java.advanced.mapper.ParallelMapper;
 
 import java.util.*;
 import java.util.function.*;
@@ -17,23 +16,10 @@ import java.util.stream.Stream;
  * @author Dunaev Kirill
  */
 public class IterativeParallelism implements AdvancedIP {
-    private final ParallelMapper mapper;
-
     /**
      * Constructs class that will create threads itself.
      */
     public IterativeParallelism() {
-        mapper = null;
-    }
-
-    /**
-     * Constructs class that will parallelize list using given the mapper.
-     * This class itself will not create new threads.
-     *
-     * @param mapper mapper that will be used
-     */
-    public IterativeParallelism(ParallelMapper mapper) {
-        this.mapper = mapper;
     }
 
     @Override
@@ -170,28 +156,40 @@ public class IterativeParallelism implements AdvancedIP {
         );
     }
 
-    private <T, R, K extends T> R parallelTask(
+    private <T, R> R parallelTask(
             final int threads,
             final int step,
-            final List<K> values,
-            final Function<? super Stream<K>, R> processor,
+            final List<T> values,
+            final Function<? super Stream<T>, R> processor,
             final Function<? super Stream<R>, R> finisher
     ) throws InterruptedException {
-        final int subListSize = (values.size() + threads - 1) / threads;
-        List<Stream<K>> segments = new ArrayList<>();
+        final int stepsPerThread = intDivideCeiling(intDivideCeiling(values.size(), step), threads);
+        final int subListSize = step * stepsPerThread;
+        List<Stream<T>> segments = new ArrayList<>();
         for (int start = 0; start < values.size(); start += subListSize) {
-            segments.add(getNthIndices(start, Math.min(values.size(), start + subListSize), step)
-                    .mapToObj(values::get)
+            segments.add(
+                    getNthIndices(start, Math.min(values.size(), start + subListSize), step)
+                            .mapToObj(values::get)
             );
         }
 
-        List<R> results = mapper != null ? mapper.map(processor, segments) : runInParallel(segments, processor);
-        return finisher.apply(results.stream().filter(Objects::nonNull));
+        List<R> results = runInParallel(processor, segments);
+        return finisher.apply(results.stream());
     }
 
-    private static <T, R, K extends T> List<R> runInParallel(
-            List<Stream<K>> segments,
-            final Function<? super Stream<K>, R> processor
+    /**
+     * Maps the list over the given function in parallel.
+     *
+     * @param processor mapping function
+     * @param segments  list to map
+     * @param <T>       segments elements type
+     * @param <R>       result type
+     * @return mapped list
+     * @throws InterruptedException if this thread is interrupted
+     */
+    protected <T, R> List<R> runInParallel(
+            final Function<? super Stream<T>, R> processor,
+            List<Stream<T>> segments
     ) throws InterruptedException {
         final List<R> subListResult = new ArrayList<>();
         final List<Thread> threadList = new ArrayList<>();
@@ -202,7 +200,7 @@ public class IterativeParallelism implements AdvancedIP {
             threadList.add(new Thread(() -> subListResult.set(index, processor.apply(segments.get(index)))));
             threadList.getLast().start();
         }
-        join(threadList);
+        joinThreads(threadList);
         return subListResult;
     }
 
@@ -213,17 +211,16 @@ public class IterativeParallelism implements AdvancedIP {
      * @param threadList thread to join
      * @throws InterruptedException if this thread is interrupted
      */
-    public static void join(List<Thread> threadList) throws InterruptedException {
-        int i = 0;
-        try {
-            for (; i < threadList.size(); ++i) {
+    public static void joinThreads(List<Thread> threadList) throws InterruptedException {
+        for (int i = 0; i < threadList.size(); ++i) {
+            try {
                 threadList.get(i).join();
+            } catch (final InterruptedException e) {
+                List<Thread> toInterrupt = threadList.subList(i, threadList.size());
+                toInterrupt.forEach(Thread::interrupt);
+                toInterrupt.forEach(th -> joinSuppress(th, e));
+                throw e;
             }
-        } catch (final InterruptedException e) {
-            List<Thread> toInterrupt = threadList.subList(i, threadList.size());
-            toInterrupt.forEach(Thread::interrupt);
-            toInterrupt.forEach(th -> joinSuppress(th, e));
-            throw e;
         }
     }
 
@@ -247,17 +244,12 @@ public class IterativeParallelism implements AdvancedIP {
         }
     }
 
-    /**
-     * Returns each n-th elements of the int range [from; to).
-     *
-     * @param from start of the range (inclusive)
-     * @param to   end of the range (exclusive)
-     * @param n    step
-     * @return each n-th elements of the range
-     */
-    public static IntStream getNthIndices(int from, int to, int n) {
-        return IntStream.range(from, to)
-                .filter(j -> j % n == 0);
+    private static IntStream getNthIndices(int from, int to, int n) {
+        return IntStream.range(0, intDivideCeiling(to - from, n))
+                .map(i -> from + i * n);
+    }
+
+    private static int intDivideCeiling(int a, int b) {
+        return (a + b - 1) / b;
     }
 }
-
