@@ -1,4 +1,4 @@
-package info.kgeorgiy.ja.dunaev.mapper;
+package info.kgeorgiy.ja.dunaev.iterative;
 
 /**
  * Manages runtime exceptions. Adds it suppressed to the first received one.

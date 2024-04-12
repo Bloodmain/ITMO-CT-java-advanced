@@ -1,30 +1,30 @@
-package info.kgeorgiy.ja.dunaev.mapper;
+package info.kgeorgiy.ja.dunaev.iterative;
 
 /**
- * Counter that allows to wait until it reaches zero.
+ * Wait group that allows to wait until the provided counter reaches zero.
  *
  * @author Dunaev Kirill
  */
-public class WaitCounter {
+public class WaitGroup {
     private int counter;
 
     /**
-     * Creates counter with given value.
+     * Creates wait group with the given counter.
      *
-     * @param value the value to store
+     * @param counter the value to store
      * @throws IllegalStateException if the value <= 0
      */
-    public WaitCounter(int value) {
-        this.counter = value;
+    public WaitGroup(int counter) {
+        this.counter = counter;
         assertPositive();
     }
 
     /**
      * Thread-safety decrement the counter. If it reaches zero, calls notifyAll.
      *
-     * @throws IllegalStateException if the counter is used when it has already reached zero
+     * @throws IllegalStateException if the counter has already reached zero
      */
-    public synchronized void decrement() {
+    public synchronized void done() {
         assertPositive();
 
         counter--;

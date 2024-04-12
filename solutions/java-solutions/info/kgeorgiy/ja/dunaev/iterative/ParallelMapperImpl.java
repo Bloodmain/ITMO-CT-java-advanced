@@ -1,4 +1,4 @@
-package info.kgeorgiy.ja.dunaev.mapper;
+package info.kgeorgiy.ja.dunaev.iterative;
 
 import info.kgeorgiy.java.advanced.mapper.ParallelMapper;
 
@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -45,16 +44,17 @@ public class ParallelMapperImpl implements ParallelMapper {
         RuntimeExceptionsManager exceptionsManager = new RuntimeExceptionsManager();
 
         final List<R> result = new ArrayList<>(Collections.nCopies(args.size(), null));
-        IntStream.range(0, args.size())
-                .forEach(i -> taskQueue.add(() -> {
-                            try {
-                                result.set(i, f.apply(args.get(i)));
-                            } catch (final RuntimeException e) {
-                                exceptionsManager.addException(e);
-                            }
-                            waitGroup.done();
-                        }
-                ));
+        for (int i = 0; i < args.size(); i++) {
+            final int index = i;
+            taskQueue.add(() -> {
+                try {
+                    result.set(index, f.apply(args.get(index)));
+                } catch (final RuntimeException e) {
+                    exceptionsManager.addException(e);
+                }
+                waitGroup.done();
+            });
+        }
 
         waitGroup.waitForZero();
         return exceptionsManager.ifNoExceptions(result);
@@ -66,6 +66,7 @@ public class ParallelMapperImpl implements ParallelMapper {
         try {
             IterativeParallelism.joinThreads(threadPool);
         } catch (final InterruptedException ignored) {
+            Thread.currentThread().interrupt();
         }
     }
 }
