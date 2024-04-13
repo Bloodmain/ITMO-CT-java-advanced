@@ -2,33 +2,22 @@ package info.kgeorgiy.ja.dunaev.iterative;
 
 import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.function.Consumer;
 
 /**
- * Thread-safety queue. Note: queue has bounded size by {@value ConcurrentQueue#CAPACITY}.
+ * Thread-safety queue. Note: queue has limited by {@value ConcurrentQueue#CAPACITY} size.
  *
  * @param <T> type of the stored elements
  * @author Dunaev Kirill
  */
 public class ConcurrentQueue<T> {
-    private final Queue<T> storage;
+    private final Queue<T> storage = new ArrayDeque<>(CAPACITY);
     private static final int CAPACITY = 1 << 20;
 
     /**
      * Creates empty queue.
      */
     public ConcurrentQueue() {
-        storage = new ArrayDeque<>(CAPACITY);
-    }
-
-    /**
-     * Checks whether the queue is empty.
-     * Warning: the method should not be used without the class locked, because its state can be changed
-     * between the time when this method released lock and the time when programmer's code uses the result of it.
-     *
-     * @return {@code true} if the queue is empty, {@code false} otherwise
-     */
-    public synchronized boolean isEmpty() {
-        return storage.isEmpty();
     }
 
     /**
@@ -57,8 +46,17 @@ public class ConcurrentQueue<T> {
         while (storage.isEmpty()) {
             wait();
         }
-        T elem = storage.poll();
+        final T elem = storage.poll();
         notifyAll();
         return elem;
+    }
+
+    /**
+     * Applies the given consumer to all elements in the queue.
+     *
+     * @param consumer the consumer to apply
+     */
+    public synchronized void forEach(Consumer<T> consumer) {
+        storage.forEach(consumer);
     }
 }

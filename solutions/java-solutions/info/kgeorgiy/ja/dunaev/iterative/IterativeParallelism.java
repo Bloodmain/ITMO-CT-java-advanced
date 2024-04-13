@@ -177,22 +177,30 @@ public class IterativeParallelism implements AdvancedIP {
             final Function<? super Stream<T>, R> processor,
             final Function<? super Stream<R>, R> finisher
     ) throws InterruptedException {
-        final int stepsPerThread = intDivideCeiling(intDivideCeiling(values.size(), step), threads);
-        final int segmentSize = step * stepsPerThread;
+        assertPositive(threads);
+
+        final int nthCount = intDivideCeiling(values.size(), step);
+        final int perThread = nthCount / threads;
+        final int rest = nthCount % threads;
 
         List<Stream<T>> segments = new ArrayList<>();
-        for (int start = 0; start < values.size(); start += segmentSize) {
+        for (int i = 0, now = 0; i < Math.min(nthCount, threads); ++i) {
+            int next = checkForRest(now + perThread, rest, i);
             segments.add(
-                    getNthIndices(start, Math.min(values.size(), start + segmentSize), step)
+                    IntStream.range(now, next)
+                            .map(ind -> ind * step)
                             .mapToObj(values::get)
             );
+            now = next;
         }
 
-        List<R> results = mapper == null ? runInParallel(processor, segments) : mapper.map(processor, segments);
-        return finisher.apply(results.stream());
+        final List<R> results = mapper == null
+                ? runInParallel(processor, segments)
+                : mapper.map(processor, segments);
+        return finisher.apply(results.stream().filter(Objects::nonNull));
     }
 
-    protected <T, R> List<R> runInParallel(
+    private <T, R> List<R> runInParallel(
             final Function<? super Stream<T>, R> processor,
             List<Stream<T>> segments
     ) throws InterruptedException {
@@ -216,7 +224,7 @@ public class IterativeParallelism implements AdvancedIP {
      * @param threadList thread to join
      * @throws InterruptedException if this thread is interrupted
      */
-    public static void joinThreads(List<Thread> threadList) throws InterruptedException {
+    public static void joinThreads(final List<Thread> threadList) throws InterruptedException {
         for (int i = 0; i < threadList.size(); ++i) {
             try {
                 threadList.get(i).join();
@@ -238,9 +246,7 @@ public class IterativeParallelism implements AdvancedIP {
     public static void joinSuppress(Thread thread, Exception e) {
         while (true) {
             try {
-                if (thread.isAlive()) {
-                    thread.join();
-                }
+                thread.join();
                 break;
             } catch (final InterruptedException e2) {
                 e.addSuppressed(e2);
@@ -248,12 +254,23 @@ public class IterativeParallelism implements AdvancedIP {
         }
     }
 
-    private static IntStream getNthIndices(int from, int to, int n) {
-        return IntStream.range(0, intDivideCeiling(to - from, n))
-                .map(i -> from + i * n);
+    /**
+     * Asserts that the given number is positive.
+     *
+     * @param value number to check
+     * @throws IllegalStateException if the number is not positive
+     */
+    public static void assertPositive(int value) {
+        if (value <= 0) {
+            throw new IllegalStateException("Threads number must be positive");
+        }
     }
 
     private static int intDivideCeiling(int a, int b) {
         return (a + b - 1) / b;
+    }
+
+    private int checkForRest(int now, int rest, int ind) {
+        return ind < rest ? now + 1 : now;
     }
 }

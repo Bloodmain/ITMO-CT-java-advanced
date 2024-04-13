@@ -10,12 +10,12 @@ import java.util.function.Function;
  */
 public interface ParallelMapper extends AutoCloseable {
     /**
-     * Maps function {@code f} over specified {@code args}.
-     * Mapping for each element performed in parallel.
+     * Maps function {@code f} over specified {@code items}.
+     * Mapping for each item is performed in parallel.
      *
      * @throws InterruptedException if calling thread was interrupted
      */
-    <T, R> List<R> map(Function<? super T, ? extends R> f, List<? extends T> args) throws InterruptedException;
+    <T, R> List<R> map(Function<? super T, ? extends R> f, List<? extends T> items) throws InterruptedException;
 
     /** Stops all threads. All unfinished mappings are left in undefined state. */
     @Override

@@ -119,15 +119,10 @@ public class ScalarIPTest<P extends ScalarIP> extends BaseIPTest<P> {
         }
 
         private double measure(final int realThreads, final List<Integer> data, final String context) throws InterruptedException {
-            System.err.println("        " + context);
             final int subtasks = getSubtasks(realThreads, threads);
             assert subtasks % realThreads == 0 && data.size() % subtasks == 0;
 
-            final P instance = createInstance(realThreads);
-
-            final long start = System.nanoTime();
-            consumer.accept(instance, subtasks, data);
-            final long time = System.nanoTime() - start;
+            final long time = measureTime(realThreads, data, this.consumer, subtasks, context);
 
             final int sequential = (subtasks - 1) * sequentialWeight;
             final int parallel = (data.size() - subtasks) / realThreads;
@@ -153,9 +148,26 @@ public class ScalarIPTest<P extends ScalarIP> extends BaseIPTest<P> {
         }
 
         protected void test(final int size, final double delta) throws InterruptedException {
-            final double speedup = speedup(size);
-            Assertions.assertTrue(speedup > 1 / delta, String.format("Lower bound hit: %.1f", speedup));
-            Assertions.assertTrue(speedup < delta, String.format("Upper bound hit: %.1f", speedup));
+            checkRatio(speedup(size), delta);
         }
+    }
+
+    protected static void checkRatio(final double value, final double delta) {
+        Assertions.assertTrue(value > 1 / delta, String.format("Lower bound hit: %.1f", value));
+        Assertions.assertTrue(value < delta, String.format("Upper bound hit: %.1f", value));
+    }
+
+    protected long measureTime(
+            final int threads,
+            final List<Integer> data,
+            final ConcurrentConsumer<P, Integer, List<Integer>> consumer,
+            final int subtasks,
+            final String context
+    ) throws InterruptedException {
+        final P instance = createInstance(threads);
+        System.err.println("        " + context);
+        final long start = System.nanoTime();
+        consumer.accept(instance, subtasks, data);
+        return System.nanoTime() - start;
     }
 }

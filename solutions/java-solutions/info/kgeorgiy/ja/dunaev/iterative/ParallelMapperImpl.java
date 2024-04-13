@@ -2,8 +2,6 @@ package info.kgeorgiy.ja.dunaev.iterative;
 
 import info.kgeorgiy.java.advanced.mapper.ParallelMapper;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -16,16 +14,20 @@ import java.util.stream.Stream;
  */
 public class ParallelMapperImpl implements ParallelMapper {
     private final List<Thread> threadPool;
-    private final ConcurrentQueue<Runnable> taskQueue;
+    private final ConcurrentQueue<Task<?>> taskQueue;
+    private volatile boolean isClosed = false;
 
     /**
      * Creates class with a thread pool, containing provided number of threads.
      *
      * @param threads numbers of thread in the thread pool
+     * @throws IllegalStateException if the number of thread is not positive
      */
-    public ParallelMapperImpl(int threads) {
+    public ParallelMapperImpl(final int threads) {
+        IterativeParallelism.assertPositive(threads);
+
         taskQueue = new ConcurrentQueue<>();
-        Runnable threadTask = () -> {
+        final Runnable worker = () -> {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     taskQueue.poll().run();
@@ -34,39 +36,54 @@ public class ParallelMapperImpl implements ParallelMapper {
                 }
             }
         };
-        threadPool = Stream.generate(() -> new Thread(threadTask)).limit(threads).toList();
+        threadPool = Stream.generate(() -> worker).limit(threads).map(Thread::new).toList();
         threadPool.forEach(Thread::start);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @throws IllegalStateException if the mapper has been closed
+     */
     @Override
-    public <T, R> List<R> map(Function<? super T, ? extends R> f, List<? extends T> args) throws InterruptedException {
-        WaitGroup waitGroup = new WaitGroup(args.size());
-        RuntimeExceptionsManager exceptionsManager = new RuntimeExceptionsManager();
+    public <T, R> List<R> map(final Function<? super T, ? extends R> f, final List<? extends T> args) throws InterruptedException {
+        assertOpen();
 
-        final List<R> result = new ArrayList<>(Collections.nCopies(args.size(), null));
+        final TasksManager<R> tasksManager = new TasksManager<>(args.size());
         for (int i = 0; i < args.size(); i++) {
             final int index = i;
-            taskQueue.add(() -> {
-                try {
-                    result.set(index, f.apply(args.get(index)));
-                } catch (final RuntimeException e) {
-                    exceptionsManager.addException(e);
-                }
-                waitGroup.done();
-            });
+            taskQueue.add(new Task<>(
+                    tasksManager,
+                    () -> f.apply(args.get(index)),
+                    index
+            ));
         }
 
-        waitGroup.waitForZero();
-        return exceptionsManager.ifNoExceptions(result);
+        List<R> results = tasksManager.waitResults();
+        assertOpen();   // if the mapper has been closed, then the results is in undefined state
+        return results;
     }
 
     @Override
     public void close() {
+        if (isClosed) {
+            return;
+        }
+
+        isClosed = true;
         threadPool.forEach(Thread::interrupt);
         try {
             IterativeParallelism.joinThreads(threadPool);
         } catch (final InterruptedException ignored) {
             Thread.currentThread().interrupt();
+        } finally {
+            taskQueue.forEach(Task::done);
+        }
+    }
+
+    private void assertOpen() {
+        if (isClosed) {
+            throw new IllegalStateException("Mapper is closed");
         }
     }
 }
