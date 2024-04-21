@@ -76,7 +76,7 @@ public class TasksManager<R> {
      *
      * @return tasks' results
      * @throws InterruptedException if this thread is interrupted
-     * @throws RuntimeException     there is an exception stored
+     * @throws RuntimeException     if there is an exception stored
      */
     public synchronized List<R> waitResults() throws InterruptedException {
         while (counter > 0) {
