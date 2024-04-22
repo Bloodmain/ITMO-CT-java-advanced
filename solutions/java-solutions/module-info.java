@@ -19,5 +19,6 @@ module info.kgeorgiy.ja.dunaev {
     exports info.kgeorgiy.ja.dunaev.arrayset;
     exports info.kgeorgiy.ja.dunaev.student;
     exports info.kgeorgiy.ja.dunaev.implementor;
+    exports info.kgeorgiy.ja.dunaev.iterative;
     exports info.kgeorgiy.ja.dunaev.crawler;
 }

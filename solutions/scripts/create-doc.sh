@@ -22,6 +22,7 @@ javadoc -d "$CURRENT_DIR/doc" \
   --module-source-path "$TESTS_MODULES.implementor=$TESTS_MODULES_PATH.implementor" \
   --module-source-path "$TESTS_MODULES.iterative=$TESTS_MODULES_PATH.iterative" \
   --module-source-path "$TESTS_MODULES.mapper=$TESTS_MODULES_PATH.mapper" \
+  --module-source-path "$TESTS_MODULES.crawler=$TESTS_MODULES_PATH.crawler" \
   --module-path "$TESTS_PATH/lib" \
   --module "$SOLUTIONS_MODULE" \
   --module "$TESTS_MODULES.base" \
@@ -30,4 +31,5 @@ javadoc -d "$CURRENT_DIR/doc" \
   --module "$TESTS_MODULES.student" \
   --module "$TESTS_MODULES.implementor" \
   --module "$TESTS_MODULES.iterative" \
-  --module "$TESTS_MODULES.mapper"
+  --module "$TESTS_MODULES.mapper" \
+  --module "$TESTS_MODULES.crawler"

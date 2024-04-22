@@ -1,5 +1,6 @@
 module:info.kgeorgiy.ja.dunaev
 info.kgeorgiy.ja.dunaev.arrayset
+info.kgeorgiy.ja.dunaev.crawler
 info.kgeorgiy.ja.dunaev.implementor
 info.kgeorgiy.ja.dunaev.iterative
 info.kgeorgiy.ja.dunaev.student
@@ -9,6 +10,8 @@ module:info.kgeorgiy.java.advanced.arrayset
 info.kgeorgiy.java.advanced.arrayset
 module:info.kgeorgiy.java.advanced.base
 info.kgeorgiy.java.advanced.base
+module:info.kgeorgiy.java.advanced.crawler
+info.kgeorgiy.java.advanced.crawler
 module:info.kgeorgiy.java.advanced.implementor
 info.kgeorgiy.java.advanced.implementor
 info.kgeorgiy.java.advanced.implementor.advanced

@@ -113,7 +113,7 @@ public class WebCrawler implements Crawler {
     /**
      * {@inheritDoc}
      *
-     * @throws IllegalArgumentException if depth < 1
+     * @throws IllegalArgumentException if depth {@code <1}
      */
     @Override
     public Result download(String url, int depth) {
