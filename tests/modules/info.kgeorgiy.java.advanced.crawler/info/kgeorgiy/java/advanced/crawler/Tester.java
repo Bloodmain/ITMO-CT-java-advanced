@@ -13,6 +13,9 @@ public final class Tester {
         new BaseTester()
                 .add("easy", EasyCrawlerTest.class)
                 .add("hard", HardCrawlerTest.class)
+                .add("new-easy", NewEasyCrawlerTest.class)
+                .add("new-hard", NewHardCrawlerTest.class)
+                .add("advanced", AdvancedCrawlerTest.class)
                 .run(args);
     }
 

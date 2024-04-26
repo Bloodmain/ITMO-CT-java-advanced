@@ -17,7 +17,15 @@ public interface ParallelMapper extends AutoCloseable {
      */
     <T, R> List<R> map(Function<? super T, ? extends R> f, List<? extends T> items) throws InterruptedException;
 
-    /** Stops all threads. All unfinished mappings are left in undefined state. */
+    /**
+     * Stops all threads.
+     * <p>
+     * Easy version: all unfinished mappings are left in undefined state.
+     * </p>
+     * <p>
+     *     Hard version: all unfinished mappings should throw exception.
+     * </p>
+     * */
     @Override
     void close();
 }

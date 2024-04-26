@@ -13,6 +13,7 @@ import org.junit.platform.launcher.listeners.TestExecutionSummary;
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.BiFunction;
 
 /**
@@ -67,26 +68,31 @@ public final class BaseTester {
                 .selectors(DiscoverySelectors.selectClass(test))
                 .build();
 
+        final Map<String, Long> testTimes = new TreeMap<>();
+
         final TestExecutionListener timeListener = new TestExecutionListener() {
             private final PrintStream err = System.err;
             private long startTime;
 
             @Override
-            public void executionStarted(final TestIdentifier test) {
-                if (test.isTest()) {
+            public void executionStarted(final TestIdentifier id) {
+                if (id.isTest()) {
                     startTime = System.currentTimeMillis();
-                    err.println("=== Running " + test.getDisplayName());
+                    err.printf("=== Running %s.%s%n", test.getSimpleName(), id.getDisplayName());
                 }
             }
 
             @Override
-            public void executionFinished(final TestIdentifier test, final TestExecutionResult result) {
-                if (test.isTest()) {
+            public void executionFinished(final TestIdentifier id, final TestExecutionResult result) {
+                if (id.isTest()) {
+                    final long time = System.currentTimeMillis() - startTime;
                     System.err.printf(
-                            "--- %s finished in %dms%n",
-                            test.getDisplayName(),
-                            System.currentTimeMillis() - startTime
+                            "--- %s.%s finished in %dms%n",
+                            test.getSimpleName(),
+                            id.getDisplayName(),
+                            time
                     );
+                    testTimes.put(id.getDisplayName(), time);
                 }
             }
         };
@@ -94,12 +100,20 @@ public final class BaseTester {
         LauncherFactory.create().execute(request, summaryListener, timeListener);
         final TestExecutionSummary summary = summaryListener.getSummary();
         if (summary.getTestsFailedCount() == 0) {
+            for (final Map.Entry<String, Long> testTime : testTimes.entrySet()) {
+                System.err.println("         " + testTime);
+            }
             return test;
         }
 
         for (final TestExecutionSummary.Failure failure : summary.getFailures()) {
             final Throwable exception = failure.getException();
-            System.err.println("Test " + failure.getTestIdentifier().getDisplayName() + " failed: " + exception.getMessage());
+            System.err.printf(
+                    "Test %s.%s failed: %s%n",
+                    test.getSimpleName(),
+                    failure.getTestIdentifier().getDisplayName(),
+                    exception.getMessage()
+            );
             //noinspection CallToPrintStackTrace
             exception.printStackTrace();
         }
