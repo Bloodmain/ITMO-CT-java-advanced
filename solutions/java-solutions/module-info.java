@@ -13,6 +13,7 @@ module info.kgeorgiy.ja.dunaev {
     requires info.kgeorgiy.java.advanced.iterative;
     requires info.kgeorgiy.java.advanced.mapper;
     requires info.kgeorgiy.java.advanced.crawler;
+    requires info.kgeorgiy.java.advanced.hello;
     requires java.compiler;
 
     exports info.kgeorgiy.ja.dunaev.walk;
@@ -21,4 +22,5 @@ module info.kgeorgiy.ja.dunaev {
     exports info.kgeorgiy.ja.dunaev.implementor;
     exports info.kgeorgiy.ja.dunaev.iterative;
     exports info.kgeorgiy.ja.dunaev.crawler;
+    exports info.kgeorgiy.ja.dunaev.hello;
 }
