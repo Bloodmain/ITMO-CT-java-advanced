@@ -20,7 +20,7 @@ public class NewListIPTest<P extends NewListIP> extends NewScalarIPTest<P> {
     }
 
     @Test
-    public void test12_sleepPerformance() throws InterruptedException {
+    public void test10_sleepPerformance() throws InterruptedException {
         testPerformance("filter", MAX_THREADS, 5, 0, 1.5, (instance, threads, values) ->
                 instance.filter(threads, values, v -> sleep(v % 3 == 1), 1));
         testPerformance("map", MAX_THREADS, 5, 0, 1.5, (instance, threads, values) ->

@@ -80,7 +80,7 @@ public class NewScalarIPTest<P extends NewScalarIP> extends ScalarIPTest<P> {
                 1,
                 sparse(data, step),
                 (instance, threads, values) -> {
-                    for (int i = 0; i < 5_000; i++) {
+                    for (int i = 0; i < 3_000; i++) {
                         f.apply(instance, threads, values, value, step);
                     }
                 },

@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Class to crawl websites. Provides list of downloaded sites, and all errors if ones.
@@ -22,7 +23,7 @@ public class WebCrawler implements AdvancedCrawler {
     private final Downloader downloader;
     private final ExecutorService downloadService;
     private final ExecutorService extractService;
-    private final Map<String, PerHostQueue> hostsQueues;
+    private final ConcurrentHashMap<String, PerHostQueue> hostsQueues;
     private final int perHost;
 
     /**
@@ -80,15 +81,23 @@ public class WebCrawler implements AdvancedCrawler {
     }
 
     private class PerHostQueue {
-        ArrayDeque<Task> queue = new ArrayDeque<>();
+        private final ArrayDeque<Task> queue = new ArrayDeque<>();
         private int counter = 0;
 
         private record Task(Callable<Future<List<String>>> task,
                             CompletableFuture<Future<Future<List<String>>>> resultFuture) {
         }
 
+        private synchronized void bookTask() {
+            ++counter;
+        }
+
+        private synchronized void unbookTask() {
+            --counter;
+        }
+
         // returns future that will be done when the task is picked up by a download service
-        private synchronized Future<Future<Future<List<String>>>> submit(Callable<Future<List<String>>> task) {
+        private synchronized Future<Future<Future<List<String>>>> submit(final Callable<Future<List<String>>> task) {
             if (counter < perHost) {
                 ++counter;
                 return CompletableFuture.completedFuture(downloadService.submit(() -> {
@@ -98,41 +107,68 @@ public class WebCrawler implements AdvancedCrawler {
                         done();
                     }
                 }));
-            } else {
-                CompletableFuture<Future<Future<List<String>>>> future = new CompletableFuture<>();
-                queue.add(new Task(task, future));
-                return future;
             }
+
+            final CompletableFuture<Future<Future<List<String>>>> future = new CompletableFuture<>();
+            queue.add(new Task(task, future));
+            return future;
         }
 
         private synchronized void done() {
             --counter;
-            Task next = queue.poll();
-            if (next != null) {
-                next.resultFuture.complete(submit(next.task).resultNow());
+            tryRunNext();
+        }
+
+        private synchronized void tryRunNext() {
+            if (counter < perHost) {
+                final Task next = queue.poll();
+                if (next != null) {
+                    next.resultFuture.complete(submit(next.task).resultNow());
+                }
             }
+        }
+
+        private synchronized boolean isEmpty() {
+            return counter == 0 && queue.isEmpty();
         }
     }
 
     private Future<Future<Future<List<String>>>> signToDownloadQueue(
             final Set<String> downloaded,
             final Map<String, IOException> errors,
-            String url,
-            int i,
+            final String url,
+            final int i
+    ) {
+        final String host = sneakyCallable(() -> URLUtils.getHost(url));
+
+        // notice: ConcurrentHashMap.compute invokes the supplied function exactly once per invocation of the method
+        PerHostQueue queue = hostsQueues.compute(host, (h, q) -> {
+            if (q == null) {
+                q = new PerHostQueue();
+            }
+            q.bookTask();   // so that the queue would not be deleted
+            return q;
+        });
+
+        var res = queue.submit(() -> downloadThenExtractLinks(downloaded, errors, url, i));
+        queue.unbookTask();
+        queue.tryRunNext(); // in case booking the task prevented the submitted task from running
+        return res;
+    }
+
+    private void clearUnusedHosts(final Map<String, IOException> errors, final Set<String> downloaded) {
+        Stream.concat(errors.keySet().stream(), downloaded.stream())
+                .map(url -> sneakyCallable(() -> URLUtils.getHost(url)))
+                .forEach(host -> hostsQueues.computeIfPresent(host, (h, q) -> q.isEmpty() ? null : q));
+    }
+
+    private boolean checkURL(
+            final String url,
             final Predicate<String> allowURL,
             final Predicate<String> allowHost
     ) {
         final String host = sneakyCallable(() -> URLUtils.getHost(url));
-        if (allowHost.test(host) && allowURL.test(url)) {
-            return hostsQueues
-                    .computeIfAbsent(host, k -> new PerHostQueue())
-                    .submit(() -> downloadThenExtractLinks(downloaded, errors, url, i));
-        } else {
-            // More futures to the God of future *I am a Time Lord?*
-            return CompletableFuture.completedFuture(CompletableFuture.completedFuture(
-                    CompletableFuture.completedFuture(Collections.emptyList()))
-            );
-        }
+        return allowHost.test(host) && allowURL.test(url);
     }
 
     private Result bfsDownload(
@@ -149,8 +185,8 @@ public class WebCrawler implements AdvancedCrawler {
             final int i = layer;
 
             final var downloadFutures = toProcess.stream()
-                    .filter(u -> !downloaded.contains(u) && !errors.containsKey(u))
-                    .map(u -> signToDownloadQueue(downloaded, errors, u, i, allowURL, allowHost))
+                    .filter(u -> !downloaded.contains(u) && !errors.containsKey(u) && checkURL(u, allowURL, allowHost))
+                    .map(u -> signToDownloadQueue(downloaded, errors, u, i))
                     .toList();
 
             toProcess = downloadFutures.stream()
@@ -161,6 +197,7 @@ public class WebCrawler implements AdvancedCrawler {
                     .collect(Collectors.toSet());
         }
 
+        clearUnusedHosts(errors, downloaded);
         return new Result(downloaded.stream().toList(), errors);
     }
 

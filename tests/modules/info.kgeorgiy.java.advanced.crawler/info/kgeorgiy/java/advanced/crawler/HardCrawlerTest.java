@@ -17,21 +17,21 @@ public class HardCrawlerTest extends EasyCrawlerTest {
 
     @Test
     public void test20_singleConnectionPerHost() throws IOException {
-        test("https://itmo.ru", 2, UNLIMITED, UNLIMITED, 1, 10, 10);
+        test("https://itmo.ru", 2, UNLIMITED, UNLIMITED, 1, MINOR_TIMEOUT, MINOR_TIMEOUT);
     }
 
     @Test
     public void test21_limitedConnectionsPerHost() throws IOException {
-        test("https://itmo.ru", 2, UNLIMITED, UNLIMITED, 10, 10, 10);
+        test("https://itmo.ru", 2, UNLIMITED, UNLIMITED, 2, MINOR_TIMEOUT, MINOR_TIMEOUT);
     }
 
     @Test
     public void test22_limitedConnectionsPerformance() throws IOException {
-        testPerformance(3, 7700);
-        testPerformance(10, 2760);
+        testPerformance(2, 3200);
+        testPerformance(10, 900);
     }
 
     private void testPerformance(final int perHost, final double target) throws IOException {
-        checkTime(target, test("https://itmo.ru", 3, UNLIMITED, UNLIMITED, perHost, 100, 50));
+        checkTime(target, test("http://www.kgeorgiy.info", 3, UNLIMITED, UNLIMITED, perHost, MAJOR_TIMEOUT * 2, MAJOR_TIMEOUT));
     }
 }

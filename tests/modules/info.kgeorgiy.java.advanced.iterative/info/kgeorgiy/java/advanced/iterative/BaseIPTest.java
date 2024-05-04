@@ -4,7 +4,6 @@ import info.kgeorgiy.java.advanced.base.BaseTest;
 
 import org.junit.jupiter.api.Assertions;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
@@ -45,7 +44,7 @@ public class BaseIPTest<P> extends BaseTest {
     protected static final List<Named<Void>> UNIT = List.of(named("Common", null));
 
     private final Random random = new Random(4875043285743285204L);
-    protected List<Integer> factors = Collections.singletonList(0);
+    protected List<Integer> factors = List.of(0);
 
     protected BaseIPTest() {
     }

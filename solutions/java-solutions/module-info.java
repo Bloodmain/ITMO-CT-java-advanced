@@ -17,6 +17,7 @@ module info.kgeorgiy.ja.dunaev {
     requires java.compiler;
 
     exports info.kgeorgiy.ja.dunaev.walk;
+    exports info.kgeorgiy.ja.dunaev.walk.exceptions;
     exports info.kgeorgiy.ja.dunaev.arrayset;
     exports info.kgeorgiy.ja.dunaev.student;
     exports info.kgeorgiy.ja.dunaev.implementor;

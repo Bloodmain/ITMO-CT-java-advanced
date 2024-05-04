@@ -1,6 +1,5 @@
 package info.kgeorgiy.ja.dunaev.hello;
 
-import info.kgeorgiy.ja.dunaev.iterative.IterativeParallelism;
 import info.kgeorgiy.java.advanced.hello.HelloClient;
 
 import java.io.IOException;
@@ -8,6 +7,8 @@ import java.io.UncheckedIOException;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
@@ -42,19 +43,16 @@ public class HelloUDPClient implements HelloClient {
     public void run(String host, int port, String prefix, int threads, int requests) {
         try {
             InetAddress address = InetAddress.getByName(host);
-            List<Thread> actions = IntStream.range(1, threads + 1)
-                    .<Runnable>mapToObj(i -> () -> sendTask(prefix + i + "_", requests, port, address, i))
-                    .map(Thread::new)
-                    .toList();
 
-            actions.forEach(Thread::start);
-            IterativeParallelism.joinThreads(actions);
+            try (ExecutorService service = Executors.newFixedThreadPool(threads)) {
+                IntStream.range(1, threads + 1)
+                        .<Runnable>mapToObj(i -> () -> sendTask(prefix + i + "_", requests, port, address, i))
+                        .forEach(service::execute);
+            }
+
         } catch (final UnknownHostException e) {
             logger.error("Can't get address of the given host", e);
             throw new UncheckedIOException(e);
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            logger.error("Interrupted while waiting for threads", e);
         }
     }
 
@@ -106,7 +104,13 @@ public class HelloUDPClient implements HelloClient {
         }
     }
 
-    private String getMessage(DatagramPacket packet) {
+    /**
+     * Return message from the packet.
+     *
+     * @param packet the packet to get message from
+     * @return the message
+     */
+    public static String getMessage(DatagramPacket packet) {
         return new String(packet.getData(), 0, packet.getLength(), StandardCharsets.UTF_8);
     }
 

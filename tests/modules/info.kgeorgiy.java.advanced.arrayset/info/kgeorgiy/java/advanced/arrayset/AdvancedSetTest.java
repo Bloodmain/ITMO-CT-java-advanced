@@ -105,13 +105,7 @@ public class AdvancedSetTest extends NavigableSetTest {
                     .forEach(index -> pair.testGet(format, method, pair.model.get(index), index));
             if (pair.comparator != null) {
                 Stream.of(Integer.MAX_VALUE - 10, Integer.MIN_VALUE + 10, null)
-                        .forEach(value -> {
-                            final int index = IntStream.range(0, pair.model.size())
-                                    .filter(i -> pair.comparator.compare(pair.model.get(i), value) == 0)
-                                    .findFirst()
-                                    .orElse(-1);
-                            pair.testGet(format, method, value, index);
-                        });
+                        .forEach(value -> pair.testGet(format, method, value, Math.max(Collections.binarySearch(pair.model, value, pair.comparator), -1)));
             }
         });
     }

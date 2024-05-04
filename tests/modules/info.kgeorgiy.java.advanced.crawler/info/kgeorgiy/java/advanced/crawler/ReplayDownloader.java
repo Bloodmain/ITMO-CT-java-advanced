@@ -15,6 +15,8 @@ import java.util.zip.GZIPInputStream;
  * @author Georgiy Korneev (kgeorgiy@kgeorgiy.info)
  */
 public class ReplayDownloader implements Downloader {
+    private static final ConcurrentMap<String, ConcurrentMap<String, Page>> cache = new ConcurrentHashMap<>();
+
     protected final ConcurrentMap<String, Page> pages;
     private final ConcurrentMap<String, Boolean> downloaded = new ConcurrentHashMap<>();
     private final AtomicInteger errors = new AtomicInteger();
@@ -36,18 +38,22 @@ public class ReplayDownloader implements Downloader {
     }
 
     @SuppressWarnings("unchecked")
-    private static ConcurrentMap<String, Page> load(final String fileName) throws IOException {
-        final InputStream stream = ReplayDownloader.class.getResourceAsStream("sites/" + fileName);
-        if (stream == null) {
-            throw new AssertionError("Cache file " + fileName + " not found");
-        }
-        try (final ObjectInput os = new ObjectInputStream(new GZIPInputStream(stream))) {
-            try {
-                return (ConcurrentMap<String, Page>) os.readObject();
-            } catch (final ClassNotFoundException e) {
-                throw new AssertionError(e);
+    private static ConcurrentMap<String, Page> load(final String fileName) {
+        return cache.computeIfAbsent(fileName, fn -> {
+            final InputStream stream = ReplayDownloader.class.getResourceAsStream("sites/" + fileName);
+            if (stream == null) {
+                throw new AssertionError("Cache file " + fileName + " not found");
             }
-        }
+            try (final ObjectInput os = new ObjectInputStream(new GZIPInputStream(stream))) {
+                try {
+                    return (ConcurrentMap<String, Page>) os.readObject();
+                } catch (final ClassNotFoundException e) {
+                    throw new AssertionError(e);
+                }
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
     }
 
     @Override
@@ -116,6 +122,7 @@ public class ReplayDownloader implements Downloader {
     }
 
     public static final class Page implements Serializable {
+        @Serial
         private static final long serialVersionUID = -6132283310711004635L;
 
         private final long loadTime;
@@ -155,7 +162,7 @@ public class ReplayDownloader implements Downloader {
 
         public void filterLinks(final Predicate<String> filter) {
             if (links != null) {
-                links = links.stream().filter(filter).collect(Collectors.toUnmodifiableList());
+                links = links.stream().filter(filter).toList();
             }
         }
 

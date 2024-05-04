@@ -15,8 +15,10 @@ import java.io.IOException;
  * @author Georgiy Korneev (kgeorgiy@kgeorgiy.info)
  */
 public class EasyCrawlerTest extends BaseTest {
-
-    public static final int UNLIMITED = 100;
+    protected static final int UNLIMITED = 100;
+    protected static final int MINOR_TIMEOUT = 10;
+    protected static final int MAJOR_TIMEOUT = 50;
+    protected static final int REAL_TIMEOUT = -10;
 
     public EasyCrawlerTest() {
     }
@@ -47,32 +49,32 @@ public class EasyCrawlerTest extends BaseTest {
 
     @Test
     public void test05_noLimits() throws IOException {
-        test(UNLIMITED, UNLIMITED, 10, 10);
+        test(UNLIMITED, UNLIMITED, MINOR_TIMEOUT, MINOR_TIMEOUT);
     }
 
     @Test
     public void test06_limitDownloads() throws IOException {
-        test(10, UNLIMITED, 100, 10);
+        test(10, UNLIMITED, MAJOR_TIMEOUT, MINOR_TIMEOUT);
     }
 
     @Test
     public void test07_limitExtractors() throws IOException {
-        test(UNLIMITED, 10, 10, 100);
+        test(UNLIMITED, 10, MINOR_TIMEOUT, MAJOR_TIMEOUT);
     }
 
     @Test
     public void test08_limitBoth() throws IOException {
-        test(10, 10, 100, 100);
+        test(10, 10, MAJOR_TIMEOUT, MAJOR_TIMEOUT);
     }
 
     @Test
     public void test09_performance() throws IOException {
-        checkTime(6500, test(UNLIMITED, UNLIMITED, 1000, 1000));
+        checkTime(3500, test(UNLIMITED, UNLIMITED, 500, 500));
     }
 
     @Test
     public void test10_realTimePerformance() throws IOException {
-        checkTime(5000, test(UNLIMITED, UNLIMITED, -10, 100));
+        checkTime(4500, test(UNLIMITED, UNLIMITED, REAL_TIMEOUT, MAJOR_TIMEOUT));
     }
 
     protected static void checkTime(final double target, final long time) {
@@ -82,7 +84,7 @@ public class EasyCrawlerTest extends BaseTest {
     }
 
     private void test(final String url, final int depth) throws IOException {
-        test(url, depth, UNLIMITED, UNLIMITED, UNLIMITED, 10, 10);
+        test(url, depth, UNLIMITED, UNLIMITED, UNLIMITED, MINOR_TIMEOUT, MINOR_TIMEOUT);
     }
 
     protected final long test(
@@ -91,8 +93,8 @@ public class EasyCrawlerTest extends BaseTest {
             final int downloadTimeout,
             final int extractTimeout
     ) throws IOException {
-        return test("http://nerc.itmo.ru/subregions/index.html", 3, downloaders, extractors,
-                UNLIMITED, downloadTimeout, extractTimeout);
+        final String url = "http://nerc.itmo.ru/subregions/index.html";
+        return test(url, 3, downloaders, extractors, UNLIMITED, downloadTimeout, extractTimeout);
     }
 
     protected final long test(

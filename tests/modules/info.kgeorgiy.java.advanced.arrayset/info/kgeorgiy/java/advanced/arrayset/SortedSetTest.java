@@ -19,7 +19,7 @@ import static net.java.quickcheck.generator.PrimitiveGenerators.integers;
  * @author Georgiy Korneev (kgeorgiy@kgeorgiy.info)
  */
 public class SortedSetTest extends BaseSetTest {
-    public static final int PERFORMANCE_SIZE = 500_000;
+    public static final int PERFORMANCE_SIZE = 300_000;
     public static final int PERFORMANCE_TIME = 10_000;
 
     public SortedSetTest() {

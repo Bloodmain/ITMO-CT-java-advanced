@@ -10,43 +10,64 @@ import java.net.SocketException;
 import java.util.concurrent.*;
 
 /**
- * Basic tests for {@link HelloClient}.
+ * Full tests for {@link HelloClient}.
  *
  * @author Georgiy Korneev (kgeorgiy@kgeorgiy.info)
  */
 public class HelloClientTest extends BaseTest {
-    private static int port = 28888;
+    private static final int PORT = 28888;
     public static final String PREFIX = HelloClientTest.class.getName();
+    public static final int SOCKET_FREE_TIME = 500;
 
     public HelloClientTest() {
     }
 
     @Test
     public void test01_singleRequest() throws SocketException {
-        test(1, 1);
+        test(1, 1, 1);
+    }
+
+    @Test
+    public void test02_sequence() throws SocketException {
+        test(100, 1, 1);
     }
 
     @Test
     public void test03_singleWithFailures() throws SocketException {
-        test(1, 0.1);
+        test(1, 1, 0.1);
+    }
+
+    @Test
+    public void test04_sequenceWithFailures() throws SocketException {
+        test(20, 1, 0.5);
     }
 
     @Test
     public void test05_singleMultithreaded() throws SocketException {
-        test(10, 1);
+        test(1, 10, 1);
+    }
+
+    @Test
+    public void test06_sequenceMultithreaded() throws SocketException {
+        test(10, 10, 1);
+    }
+
+    @Test
+    public void test07_sequenceMultithreadedWithFails() throws SocketException {
+        test(10, 10, 0.5);
     }
 
     @SuppressWarnings("try")
-    private static void test(final int threads, final double p) throws SocketException {
-        final int port = HelloClientTest.port++;
-        try (final DatagramSocket socket = new DatagramSocket(port)) {
+    private void test(final int requests, final int threads, final double p) throws SocketException {
+        try (final DatagramSocket socket = new DatagramSocket(PORT)) {
             final ExecutorService executor = Executors.newFixedThreadPool(2);
             try {
                 final CompletionService<int[]> completionService = new ExecutorCompletionService<>(executor);
-                completionService.submit(Util.server(PREFIX, threads, p, socket));
+                final String prefix = PREFIX + "_" + testName.replaceAll("[0-9]+", "") + "_";
+                completionService.submit(server(prefix, threads, p, socket));
                 completionService.submit(() -> {
                     final HelloClient client = createCUT();
-                    client.run("localhost", port, PREFIX, threads, 1);
+                    client.run("localhost", PORT, prefix, threads, requests);
                     return null;
                 });
                 for (int i = 0; i < 2; i++) {
@@ -54,7 +75,11 @@ public class HelloClientTest extends BaseTest {
                         final int[] actual = completionService.take().get();
                         if (actual != null) {
                             for (int j = 0; j < actual.length; j++) {
-                                Assertions.assertEquals(1, actual[j], "Invalid number of requests on thread " + j);
+                                Assertions.assertEquals(
+                                        requests,
+                                        actual[j],
+                                        "Invalid number of requests on thread " + j
+                                );
                             }
                         } else {
                             socket.close();
@@ -70,11 +95,21 @@ public class HelloClientTest extends BaseTest {
                         }
                     }
                 }
+                Thread.sleep(SOCKET_FREE_TIME);
             } finally {
                 executor.shutdownNow();
             }
         } catch (final InterruptedException e) {
             throw new AssertionError("Test thread interrupted", e);
         }
+    }
+
+    protected Callable<int[]> server(
+            final String prefix,
+            final int threads,
+            final double p,
+            final DatagramSocket socket
+    ) {
+        return Util.server(prefix, threads, p, socket);
     }
 }

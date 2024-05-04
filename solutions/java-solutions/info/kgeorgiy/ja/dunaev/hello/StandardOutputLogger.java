@@ -17,18 +17,22 @@ public class StandardOutputLogger implements Logger {
         this.prefix = prefix;
     }
 
+    private String formatPrefix(String message) {
+        return "%s | %s".formatted(prefix, message);
+    }
+
     @Override
     public void info(String message) {
-        System.out.println(prefix + " | " + message);
+        System.out.println(formatPrefix(message));
     }
 
     @Override
     public void warn(String message) {
-        System.err.println(prefix + " | " + message);
+        System.err.println(formatPrefix(message));
     }
 
     @Override
     public void error(String ctx, Exception e) {
-        System.err.println(prefix + " | " + ctx + ": " + e.getMessage());
+        System.err.println(formatPrefix(ctx + ": " + e.getMessage()));
     }
 }

@@ -1,7 +1,7 @@
 package info.kgeorgiy.ja.dunaev.hello;
 
-import info.kgeorgiy.ja.dunaev.iterative.IterativeParallelism;
 import info.kgeorgiy.java.advanced.hello.HelloServer;
+import info.kgeorgiy.java.advanced.hello.NewHelloServer;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -9,9 +9,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
@@ -21,14 +19,14 @@ import java.util.concurrent.Semaphore;
  *
  * @author Dunaev Kirill
  */
-public class HelloUDPServer implements HelloServer {
-    private static final byte[] ANSWER_PREFIX = "Hello, ".getBytes(StandardCharsets.UTF_8);
+public class HelloUDPServer implements NewHelloServer {
     private final Logger logger = new StandardOutputLogger("UDP Server");
 
     private ExecutorService service;
-    private DatagramSocket socket;
+    private ExecutorService listeners;
+    private List<DatagramSocket> sockets;
+
     private Semaphore semaphore;
-    private Thread listener;
     private boolean started;
 
     /**
@@ -44,28 +42,33 @@ public class HelloUDPServer implements HelloServer {
      * @throws UncheckedIOException  if a {@link SocketException} is occurred
      */
     @Override
-    public void start(int port, int threads) {
+    public void start(int threads, Map<Integer, String> ports) {
         if (started) {
             throw new IllegalStateException("Server is already started");
         }
 
-        final int bufferSize;
+        if (ports == null || ports.isEmpty()) {
+            return;
+        }
+
         try {
-            socket = new DatagramSocket(port);
-            bufferSize = socket.getReceiveBufferSize();
+            sockets = new ArrayList<>();
+            semaphore = new Semaphore(threads);
+            service = Executors.newFixedThreadPool(threads);
+            started = true;
+
+            listeners = Executors.newFixedThreadPool(ports.size());
+            for (Map.Entry<Integer, String> port : ports.entrySet()) {
+                DatagramSocket socket = new DatagramSocket(port.getKey());
+                sockets.add(socket);
+                listeners.execute(() -> listen(socket, port.getValue()));
+            }
         } catch (final SocketException e) {
             throw new UncheckedIOException(e);
         }
-
-        semaphore = new Semaphore(threads);
-        service = Executors.newFixedThreadPool(threads);
-        started = true;
-
-        listener = new Thread(() -> listen(bufferSize));
-        listener.start();
     }
 
-    private void listen(int bufferSize) {
+    private void listen(DatagramSocket socket, String format) {
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 semaphore.acquire();
@@ -76,10 +79,11 @@ public class HelloUDPServer implements HelloServer {
             }
 
             try {
+                int bufferSize = socket.getReceiveBufferSize();
                 final byte[] buffer = new byte[bufferSize];
-                DatagramPacket packet = new DatagramPacket(buffer, ANSWER_PREFIX.length, bufferSize - ANSWER_PREFIX.length);
+                DatagramPacket packet = new DatagramPacket(buffer, bufferSize);
                 socket.receive(packet);
-                service.submit(() -> processQuery(packet));
+                service.submit(() -> processQuery(packet, socket, format));
             } catch (final Exception e) {
                 semaphore.release();
                 logger.error("Error receiving a package, stopping listening", e);
@@ -88,11 +92,10 @@ public class HelloUDPServer implements HelloServer {
         }
     }
 
-    private void processQuery(DatagramPacket query) {
+    private void processQuery(DatagramPacket query, DatagramSocket socket, String format) {
         try {
-            byte[] buffer = query.getData();
-            System.arraycopy(ANSWER_PREFIX, 0, buffer, 0, ANSWER_PREFIX.length);
-            DatagramPacket answer = new DatagramPacket(buffer, ANSWER_PREFIX.length + query.getLength(), query.getSocketAddress());
+            byte[] res = format.replaceAll("\\$", HelloUDPClient.getMessage(query)).getBytes(StandardCharsets.UTF_8);
+            DatagramPacket answer = new DatagramPacket(res, res.length, query.getSocketAddress());
             socket.send(answer);
         } catch (final IOException e) {
             logger.error("Error sending the answer, ignoring", e);
@@ -104,16 +107,9 @@ public class HelloUDPServer implements HelloServer {
     @Override
     public void close() {
         if (started) {
-            socket.close();
+            sockets.forEach(DatagramSocket::close);
             service.close();
-
-            listener.interrupt();
-            try {
-                IterativeParallelism.joinThreads(List.of(listener));
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-
+            listeners.close();
             started = false;
         }
     }
