@@ -10,28 +10,19 @@ SOLUTIONS_MODULE="info.kgeorgiy.ja.dunaev"
 
 TESTS_MODULES_PATH="$TESTS_PATH/modules/$TESTS_MODULES"
 
+MODULES_SOURCES=""
+MODULES_NAMES=""
+for file in $TESTS_PATH/modules/*; do
+  MODULES_SOURCES+=" --module-source-path $(basename $file)=$file"
+  MODULES_NAMES+=" --module $(basename $file)"
+done
+
 javadoc -d "$CURRENT_DIR/doc" \
   -private \
   -version \
   -author \
   --module-source-path "$SOLUTIONS_MODULE=$SOLUTIONS_PATH" \
-  --module-source-path "$TESTS_MODULES.base=$TESTS_MODULES_PATH.base" \
-  --module-source-path "$TESTS_MODULES.walk=$TESTS_MODULES_PATH.walk" \
-  --module-source-path "$TESTS_MODULES.arrayset=$TESTS_MODULES_PATH.arrayset" \
-  --module-source-path "$TESTS_MODULES.student=$TESTS_MODULES_PATH.student" \
-  --module-source-path "$TESTS_MODULES.implementor=$TESTS_MODULES_PATH.implementor" \
-  --module-source-path "$TESTS_MODULES.iterative=$TESTS_MODULES_PATH.iterative" \
-  --module-source-path "$TESTS_MODULES.mapper=$TESTS_MODULES_PATH.mapper" \
-  --module-source-path "$TESTS_MODULES.crawler=$TESTS_MODULES_PATH.crawler" \
-  --module-source-path "$TESTS_MODULES.hello=$TESTS_MODULES_PATH.hello" \
+  $MODULES_SOURCES \
   --module-path "$TESTS_PATH/lib" \
   --module "$SOLUTIONS_MODULE" \
-  --module "$TESTS_MODULES.base" \
-  --module "$TESTS_MODULES.walk" \
-  --module "$TESTS_MODULES.arrayset" \
-  --module "$TESTS_MODULES.student" \
-  --module "$TESTS_MODULES.implementor" \
-  --module "$TESTS_MODULES.iterative" \
-  --module "$TESTS_MODULES.mapper" \
-  --module "$TESTS_MODULES.crawler" \
-  --module "$TESTS_MODULES.hello" \
+  $MODULES_NAMES
