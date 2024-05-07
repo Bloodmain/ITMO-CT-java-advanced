@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
@@ -116,9 +117,13 @@ public class HelloUDPClient implements HelloClient {
 
     private boolean validate(String s, int[] originInts) {
         Matcher m = DIGIT_PATTERN.matcher(s);
-        for (int x : originInts) {
+        List<MatchResult> results = m.results().toList();
+        if (originInts.length != results.size()) {
+            return false;
+        }
+        for (int i = 0; i < results.size(); i++) {
             try {
-                if (!m.find() || Integer.parseInt(m.group()) != x) {
+                if (Integer.parseInt(results.get(i).group()) != originInts[i]) {
                     return false;
                 }
             } catch (final NumberFormatException e) {

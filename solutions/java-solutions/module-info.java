@@ -6,6 +6,10 @@
  * @author Dunaev Kirill
  */
 module info.kgeorgiy.ja.dunaev {
+    requires java.compiler;
+    requires java.rmi;
+    requires org.junit.jupiter.api;
+
     requires info.kgeorgiy.java.advanced.walk;
     requires info.kgeorgiy.java.advanced.arrayset;
     requires info.kgeorgiy.java.advanced.student;
@@ -14,7 +18,6 @@ module info.kgeorgiy.ja.dunaev {
     requires info.kgeorgiy.java.advanced.mapper;
     requires info.kgeorgiy.java.advanced.crawler;
     requires info.kgeorgiy.java.advanced.hello;
-    requires java.compiler;
 
     exports info.kgeorgiy.ja.dunaev.walk;
     exports info.kgeorgiy.ja.dunaev.walk.exceptions;
@@ -24,4 +27,6 @@ module info.kgeorgiy.ja.dunaev {
     exports info.kgeorgiy.ja.dunaev.iterative;
     exports info.kgeorgiy.ja.dunaev.crawler;
     exports info.kgeorgiy.ja.dunaev.hello;
+    exports info.kgeorgiy.ja.dunaev.bank;
+    exports info.kgeorgiy.ja.dunaev.bank.internal;
 }

@@ -3,6 +3,7 @@ package info.kgeorgiy.ja.dunaev.crawler;
 import info.kgeorgiy.java.advanced.crawler.*;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
@@ -164,11 +165,17 @@ public class WebCrawler implements AdvancedCrawler {
 
     private boolean checkURL(
             final String url,
+            final Map<String, IOException> errors,
             final Predicate<String> allowURL,
             final Predicate<String> allowHost
     ) {
-        final String host = sneakyCallable(() -> URLUtils.getHost(url));
-        return allowHost.test(host) && allowURL.test(url);
+        try {
+            final String host = URLUtils.getHost(url);
+            return allowHost.test(host) && allowURL.test(url);
+        } catch (MalformedURLException e) {
+            errors.put(url, e);
+            return false;
+        }
     }
 
     private Result bfsDownload(
@@ -185,7 +192,7 @@ public class WebCrawler implements AdvancedCrawler {
             final int i = layer;
 
             final var downloadFutures = toProcess.stream()
-                    .filter(u -> !downloaded.contains(u) && !errors.containsKey(u) && checkURL(u, allowURL, allowHost))
+                    .filter(u -> !downloaded.contains(u) && !errors.containsKey(u) && checkURL(u, errors, allowURL, allowHost))
                     .map(u -> signToDownloadQueue(downloaded, errors, u, i))
                     .toList();
 
