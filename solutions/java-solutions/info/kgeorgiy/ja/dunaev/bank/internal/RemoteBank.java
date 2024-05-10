@@ -64,4 +64,18 @@ public class RemoteBank implements Bank {
             }
         };
     }
+
+    private Account getAccount(String id) throws RemoteException {
+        String[] idSplit = id.split(":");
+        return getRemotePersonByPassport(idSplit[0]).getAccount(idSplit[1]);
+    }
+
+    @Override
+    public synchronized void makeTransaction(String id1, String id2, long amount) throws RemoteException, AccountException {
+        Account acc1 = getAccount(id1);
+        Account acc2 = getAccount(id2);
+
+        acc1.updateAmount(-amount);
+        acc2.updateAmount(amount);
+    }
 }

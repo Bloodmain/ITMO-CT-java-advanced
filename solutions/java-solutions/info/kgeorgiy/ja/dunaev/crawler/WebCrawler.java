@@ -44,9 +44,9 @@ public class WebCrawler implements AdvancedCrawler {
         }
 
         this.downloader = downloader;
-        downloadService = Executors.newFixedThreadPool(downloaders);
-        extractService = Executors.newFixedThreadPool(extractors);
-        hostsQueues = new ConcurrentHashMap<>();
+        this.downloadService = Executors.newFixedThreadPool(downloaders);
+        this.extractService = Executors.newFixedThreadPool(extractors);
+        this.hostsQueues = new ConcurrentHashMap<>();
         this.perHost = perHost;
     }
 
@@ -143,7 +143,7 @@ public class WebCrawler implements AdvancedCrawler {
         final String host = sneakyCallable(() -> URLUtils.getHost(url));
 
         // notice: ConcurrentHashMap.compute invokes the supplied function exactly once per invocation of the method
-        PerHostQueue queue = hostsQueues.compute(host, (h, q) -> {
+        final PerHostQueue queue = hostsQueues.compute(host, (h, q) -> {
             if (q == null) {
                 q = new PerHostQueue();
             }
@@ -151,7 +151,7 @@ public class WebCrawler implements AdvancedCrawler {
             return q;
         });
 
-        var res = queue.submit(() -> downloadThenExtractLinks(downloaded, errors, url, i));
+        final var res = queue.submit(() -> downloadThenExtractLinks(downloaded, errors, url, i));
         queue.unbookTask();
         queue.tryRunNext(); // in case booking the task prevented the submitted task from running
         return res;
@@ -172,7 +172,7 @@ public class WebCrawler implements AdvancedCrawler {
         try {
             final String host = URLUtils.getHost(url);
             return allowHost.test(host) && allowURL.test(url);
-        } catch (MalformedURLException e) {
+        } catch (final MalformedURLException e) {
             errors.put(url, e);
             return false;
         }

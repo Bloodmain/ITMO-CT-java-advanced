@@ -34,6 +34,18 @@ public interface Bank extends Remote, Serializable {
     Person createPerson(String firstName, String lastName, String passport, PersonType type) throws RemoteException;
 
     /**
+     * Makes a transaction from account with {@code id1} to an account with {@code id2}.
+     *
+     * @param id1    id of first account
+     * @param id2    id of second account
+     * @param amount the amount to send
+     * @throws RemoteException  if remote server error occurred
+     * @throws AccountException if one of the account can't be updated on this amount
+     */
+    void makeTransaction(String id1, String id2, long amount) throws RemoteException, AccountException;
+
+
+    /**
      * Type of the persons.
      * <ul>
      * <li> {@code LOCAL} is for {@link LocalPerson}</li>

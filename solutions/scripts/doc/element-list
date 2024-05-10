@@ -1,5 +1,7 @@
 module:info.kgeorgiy.ja.dunaev
 info.kgeorgiy.ja.dunaev.arrayset
+info.kgeorgiy.ja.dunaev.bank
+info.kgeorgiy.ja.dunaev.bank.internal
 info.kgeorgiy.ja.dunaev.crawler
 info.kgeorgiy.ja.dunaev.hello
 info.kgeorgiy.ja.dunaev.implementor

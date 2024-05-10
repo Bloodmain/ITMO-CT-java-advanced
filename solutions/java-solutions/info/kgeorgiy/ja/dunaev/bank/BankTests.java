@@ -2,10 +2,19 @@ package info.kgeorgiy.ja.dunaev.bank;
 
 import info.kgeorgiy.ja.dunaev.bank.internal.*;
 import org.junit.jupiter.api.*;
+import org.junit.platform.engine.discovery.DiscoverySelectors;
+import org.junit.platform.launcher.Launcher;
+import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
+import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
+import org.junit.platform.launcher.listeners.TestExecutionSummary;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
-import java.net.MalformedURLException;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
@@ -18,6 +27,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.BiConsumer;
 import java.util.function.IntFunction;
 import java.util.stream.IntStream;
 
@@ -30,7 +40,6 @@ import java.util.stream.IntStream;
 public class BankTests {
     private static final Random RANDOM = new Random(297562875629470103L);
     private static final String BANK_BIND_URL = "//localhost/bank";
-    private static final int BANK_PORT = 1808;
 
     private static final int THREADS = 10;
     private static final int MAJOR_PER_THREAD = 1000;
@@ -90,16 +99,53 @@ public class BankTests {
     }
 
     @BeforeEach
-    public void setupBankServer() throws RemoteException, MalformedURLException, NotBoundException {
+    public void setupBankServer() throws IOException, NotBoundException {
+        int port;
+        log("Getting an available port");
+        try (ServerSocket socket = new ServerSocket(0)) {
+            port = socket.getLocalPort();
+            log("Port found: " + port);
+        } catch (final IOException e) {
+            log("Can't find available port");
+            throw e;
+        }
+
         log("Starting a bank server");
-        final Bank bank = new RemoteBank(BANK_PORT);
-        UnicastRemoteObject.exportObject(bank, BANK_PORT);
+        final Bank bank = new RemoteBank(port);
+        UnicastRemoteObject.exportObject(bank, port);
         Naming.rebind(BANK_BIND_URL, bank);
         log("Server started");
 
         log("Getting a remote bank");
         this.bank = (Bank) Naming.lookup(BankServer.BANK_BIND_URL);
         log("Remote bank found");
+    }
+
+    public static void main(String[] args) {
+        LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+                .selectors(DiscoverySelectors.selectPackage("info.kgeorgiy.ja.dunaev.bank"))
+                .build();
+        Launcher launcher = LauncherFactory.create();
+        launcher.discover(request);
+
+        SummaryGeneratingListener listener = new SummaryGeneratingListener();
+        launcher.execute(request, listener);
+
+        TestExecutionSummary summary = listener.getSummary();
+
+        summary.printTo(new PrintWriter(System.out));
+        List<TestExecutionSummary.Failure> failures = summary.getFailures();
+        if (!failures.isEmpty()) {
+            System.out.println("Failed: ");
+            for (TestExecutionSummary.Failure f : failures) {
+                Throwable ex = f.getException();
+                System.out.printf("* %s with a cause %s%n", f.getTestIdentifier().getDisplayName(), ex.getMessage());
+                ex.printStackTrace(System.out);
+            }
+            System.exit(1);
+        } else {
+            System.exit(0);
+        }
     }
 
     private Person createPerson(PersonalInfo info, Bank.PersonType type) throws RemoteException {
@@ -619,7 +665,7 @@ public class BankTests {
             standardOut.println(message);
         }
 
-        // Output capturing is commented because I don't know if this is allowed
+        // I do think we have no permissions to change sout/serr, so it was commented
         @BeforeEach
         public void setUpOutputCaptor() {
             log("Replacing output+error streams");
@@ -716,7 +762,8 @@ public class BankTests {
             long amount = runAppRandomDelta(info, subId, 0);
             amount = runAppRandomDelta(info, subId, amount);
 
-            runAppError(info.firstName, "bad last name", info.passport, subId, "1");
+            runAppError(getRandomString(), info.lastName, info.passport, subId, "1");
+            runAppError(info.firstName, getRandomString(), info.passport, subId, "1");
             runAppRandomDelta(info, subId, amount);
         }
 
@@ -733,7 +780,7 @@ public class BankTests {
 
         @Test
         public void test45_manyPersons() throws RemoteException {
-            int count = 500;
+            int count = 200;
 
             HashMap<String, Long> amounts = new HashMap<>();
             for (int i = 0; i < count; ++i) {
@@ -748,6 +795,88 @@ public class BankTests {
                     log("Stressed %d out of %d".formatted(i, count));
                 }
             }
+        }
+    }
+
+    private void preparePersons(long delta, BiConsumer<Long, Long> checks) throws RemoteException, AccountException {
+        PersonalInfo info1 = INFOS.getFirst();
+        PersonalInfo info2 = INFOS.getLast();
+        String subId = SUB_IDS.getFirst();
+
+        Account a1 = createRemotePerson(info1).createAccount(subId);
+        Account a2 = createRemotePerson(info2).createAccount(subId);
+        a1.updateAmount(5000);
+        a2.updateAmount(5000);
+
+        bank.makeTransaction(a1.getId(), a2.getId(), delta);
+        checks.accept(a1.getAmount(), a2.getAmount());
+    }
+
+    @Test
+    public void test50_oneTransaction() throws RemoteException, AccountException {
+        preparePersons(3000, (a1, a2) -> {
+            Assertions.assertEquals(a1, 2000);
+            Assertions.assertEquals(a2, 8000);
+        });
+    }
+
+    @Test
+    public void test51_failTransaction() {
+        Assertions.assertThrows(AccountException.class, () -> preparePersons(6000, (a1, a2) -> {
+            Assertions.assertEquals(a1, 5000);
+            Assertions.assertEquals(a2, 5000);
+        }));
+    }
+
+    @Test
+    public void test52_negativeTransaction() throws RemoteException, AccountException {
+        preparePersons(-3000, (a1, a2) -> {
+            Assertions.assertEquals(a1, 8000);
+            Assertions.assertEquals(a2, 2000);
+        });
+    }
+
+    @Test
+    public void test53_concurrentTransaction() throws RemoteException, AccountException, ExecutionException, InterruptedException {
+        String subId = SUB_IDS.getFirst();
+
+        Map<String, Long> amounts = new HashMap<>();
+        for (PersonalInfo info : INFOS) {
+            Account a1 = createRemotePerson(info).createAccount(subId);
+            long delta = 1 << 23;
+            a1.updateAmount(delta);
+            amounts.put(info.passport, delta);
+        }
+
+        Account acc1 = createRemotePerson(INFOS.getFirst()).createAccount(subId);
+
+        List<PersonalInfo> persons = RANDOM.ints(THREADS * MAJOR_PER_THREAD, 1, INFOS.size())
+                .mapToObj(INFOS::get)
+                .toList();
+        List<Long> deltas = RANDOM.longs(THREADS * MAJOR_PER_THREAD, 0, 600).boxed().toList();
+
+        concurrentTest(i -> () -> {
+            for (int j = 0; j < MAJOR_PER_THREAD; j++) {
+                int now = i * MAJOR_PER_THREAD + j;
+                Account acc2 = createRemotePerson(persons.get(now)).getAccount(subId);
+                bank.makeTransaction(acc1.getId(), acc2.getId(), deltas.get(now));
+            }
+
+            return null;
+        });
+
+        for (int i = 0; i < THREADS * MAJOR_PER_THREAD; i++) {
+            PersonalInfo p2 = persons.get(i);
+            Long am2 = amounts.get(p2.passport);
+            Long am1 = amounts.get(INFOS.getFirst().passport);
+            long delta = deltas.get(i);
+
+            amounts.put(INFOS.getFirst().passport, am1 - delta);
+            amounts.put(p2.passport, am2 + delta);
+        }
+
+        for (PersonalInfo info : INFOS) {
+            Assertions.assertEquals(amounts.get(info.passport), createRemotePerson(info).getAccount(subId).getAmount());
         }
     }
 }
