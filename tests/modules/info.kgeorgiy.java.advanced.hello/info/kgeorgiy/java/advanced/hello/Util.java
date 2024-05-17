@@ -103,7 +103,7 @@ public final class Util {
                     DatagramPacket packet = createPacket(socket);
                     socket.receive(packet);
                     String request = getString(packet);
-                    String message = "Invalid or unexpected request " + request;
+                    String message = "Invalid or unexpected request ex (%s) found (%s)".formatted(prefix, request);
                     Assertions.assertTrue(request.startsWith(prefix), message);
                     String[] parts = request.substring(prefix.length()).split("_");
                     Assertions.assertEquals(2, parts.length, message);

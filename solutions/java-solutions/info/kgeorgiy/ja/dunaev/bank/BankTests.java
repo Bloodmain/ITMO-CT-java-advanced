@@ -798,46 +798,78 @@ public class BankTests {
         }
     }
 
-    private void preparePersons(long delta, BiConsumer<Long, Long> checks) throws RemoteException, AccountException {
-        PersonalInfo info1 = INFOS.getFirst();
-        PersonalInfo info2 = INFOS.getLast();
+    private void preparePersons(long am1, long am2, long delta, BiConsumer<Long, Long> checks, List<PersonalInfo> infos) throws RemoteException, AccountException {
+        PersonalInfo info1 = infos.getFirst();
+        PersonalInfo info2 = infos.getLast();
         String subId = SUB_IDS.getFirst();
 
         Account a1 = createRemotePerson(info1).createAccount(subId);
         Account a2 = createRemotePerson(info2).createAccount(subId);
-        a1.updateAmount(5000);
-        a2.updateAmount(5000);
+        a1.updateAmount(am1);
+        a2.updateAmount(am2);
 
-        bank.makeTransaction(a1.getId(), a2.getId(), delta);
-        checks.accept(a1.getAmount(), a2.getAmount());
+        try {
+            bank.makeTransaction(a1.getId(), a2.getId(), delta);
+        } finally {
+            checks.accept(a1.getAmount(), a2.getAmount());
+        }
     }
 
     @Test
     public void test50_oneTransaction() throws RemoteException, AccountException {
-        preparePersons(3000, (a1, a2) -> {
+        preparePersons(5000, 5000, 3000, (a1, a2) -> {
             Assertions.assertEquals(a1, 2000);
             Assertions.assertEquals(a2, 8000);
-        });
+        }, INFOS);
     }
 
     @Test
     public void test51_failTransaction() {
-        Assertions.assertThrows(AccountException.class, () -> preparePersons(6000, (a1, a2) -> {
+        Assertions.assertThrows(AccountException.class, () -> preparePersons(5000, 5000, 6000, (a1, a2) -> {
             Assertions.assertEquals(a1, 5000);
             Assertions.assertEquals(a2, 5000);
-        }));
+        }, INFOS));
     }
 
     @Test
     public void test52_negativeTransaction() throws RemoteException, AccountException {
-        preparePersons(-3000, (a1, a2) -> {
+        preparePersons(5000, 5000, -3000, (a1, a2) -> {
             Assertions.assertEquals(a1, 8000);
             Assertions.assertEquals(a2, 2000);
-        });
+        }, INFOS);
     }
 
     @Test
-    public void test53_concurrentTransaction() throws RemoteException, AccountException, ExecutionException, InterruptedException {
+    public void test53_transactionAtomicity() {
+        Assertions.assertThrows(AccountException.class, () -> preparePersons(5000, Long.MAX_VALUE, 1, (a1, a2) -> {
+            Assertions.assertEquals(a1, 5000);
+            Assertions.assertEquals(a2, Long.MAX_VALUE);
+        }, INFOS));
+
+        Assertions.assertThrows(AccountException.class, () -> preparePersons(5000, 9, -10, (a1, a2) -> {
+            Assertions.assertEquals(a1, 5000);
+            Assertions.assertEquals(a2, 9);
+        }, INFOS));
+    }
+
+    @Test
+    public void test54_selfOkayTransaction() throws RemoteException, AccountException {
+        preparePersons(5000, 0, 5000, (a1, a2) -> {
+            Assertions.assertEquals(a1, 5000);
+            Assertions.assertEquals(a2, 5000);
+        }, List.of(INFOS.getFirst()));
+    }
+
+    @Test
+    public void test55_selfFailTransaction() {
+        Assertions.assertThrows(AccountException.class, () -> preparePersons(5000, 0, 5001, (a1, a2) -> {
+            Assertions.assertEquals(a1, 5000);
+            Assertions.assertEquals(a2, 5000);
+        }, List.of(INFOS.getFirst())));
+    }
+
+    @Test
+    public void test56_concurrentTransaction() throws RemoteException, AccountException, ExecutionException, InterruptedException {
         String subId = SUB_IDS.getFirst();
 
         Map<String, Long> amounts = new HashMap<>();

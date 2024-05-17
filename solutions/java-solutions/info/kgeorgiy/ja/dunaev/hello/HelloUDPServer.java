@@ -1,117 +1,57 @@
 package info.kgeorgiy.ja.dunaev.hello;
 
-import info.kgeorgiy.java.advanced.hello.HelloServer;
-import info.kgeorgiy.java.advanced.hello.NewHelloServer;
-
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.SocketException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.*;
 
 /**
- * Server that uses UDP protocol to receive packets and to send them with the prefix.
+ * Server that uses UDP protocol to receive packets and to send them with specified formats.
  *
  * @author Dunaev Kirill
  */
-public class HelloUDPServer implements NewHelloServer {
-    private final Logger logger = new StandardOutputLogger("UDP Server");
-
-    private ExecutorService service;
-    private ExecutorService listeners;
-    private List<DatagramSocket> sockets;
-
-    private Semaphore semaphore;
-    private boolean started;
+public class HelloUDPServer extends AbstractServer {
+    private final List<DatagramSocket> sockets = new ArrayList<>();
 
     /**
-     * Creates server. The server should be started with {@link #start(int, int)}.
+     * Creates server. The server should be started with {@link #start(int, Map)}.
      */
     public HelloUDPServer() {
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @throws IllegalStateException if the server has been already stared
-     * @throws UncheckedIOException  if a {@link SocketException} is occurred
-     */
     @Override
-    public void start(int threads, Map<Integer, String> ports) {
-        if (started) {
-            throw new IllegalStateException("Server is already started");
-        }
+    protected void setup(final Map<Integer, String> ports) throws IOException {
+        listeners = Executors.newFixedThreadPool(ports.size());
 
-        if (ports == null || ports.isEmpty()) {
-            return;
-        }
+        for (final Map.Entry<Integer, String> port : ports.entrySet()) {
+            final DatagramSocket socket = new DatagramSocket(port.getKey());
+            sockets.add(socket);
 
-        try {
-            sockets = new ArrayList<>();
-            semaphore = new Semaphore(threads);
-            service = Executors.newFixedThreadPool(threads);
-            started = true;
-
-            listeners = Executors.newFixedThreadPool(ports.size());
-            for (Map.Entry<Integer, String> port : ports.entrySet()) {
-                DatagramSocket socket = new DatagramSocket(port.getKey());
-                sockets.add(socket);
-                listeners.execute(() -> listen(socket, port.getValue()));
-            }
-        } catch (final SocketException e) {
-            throw new UncheckedIOException(e);
+            final int bufferSize = socket.getReceiveBufferSize();
+            listeners.execute(() -> listen(() -> listenWork(socket, port.getValue(), bufferSize)));
         }
     }
 
-    private void listen(DatagramSocket socket, String format) {
-        while (!Thread.currentThread().isInterrupted()) {
-            try {
-                semaphore.acquire();
-            } catch (final InterruptedException e) {
-                Thread.currentThread().interrupt();
-                logger.error("Interrupted on semaphore, stopping listening", e);
-                break;
-            }
-
-            try {
-                int bufferSize = socket.getReceiveBufferSize();
-                final byte[] buffer = new byte[bufferSize];
-                DatagramPacket packet = new DatagramPacket(buffer, bufferSize);
-                socket.receive(packet);
-                service.submit(() -> processQuery(packet, socket, format));
-            } catch (final Exception e) {
-                semaphore.release();
-                logger.error("Error receiving a package, stopping listening", e);
-                break;
-            }
-        }
+    private void listenWork(final DatagramSocket socket, final String format, final int bufferSize) throws IOException {
+        final DatagramPacket packet = new DatagramPacket(new byte[bufferSize], bufferSize);
+        socket.receive(packet);
+        handlersService.submit(() -> processQuery(packet, socket, format));
     }
 
-    private void processQuery(DatagramPacket query, DatagramSocket socket, String format) {
+    private void processQuery(final DatagramPacket query, final DatagramSocket socket, final String format) {
         try {
-            byte[] res = format.replaceAll("\\$", HelloUDPClient.getMessage(query)).getBytes(StandardCharsets.UTF_8);
-            DatagramPacket answer = new DatagramPacket(res, res.length, query.getSocketAddress());
-            socket.send(answer);
+            query.setData(replaceFormat(Utils.getMessage(query), format));
+            socket.send(query);
         } catch (final IOException e) {
             logger.error("Error sending the answer, ignoring", e);
-        } finally {
-            semaphore.release();
         }
     }
 
     @Override
-    public void close() {
-        if (started) {
-            sockets.forEach(DatagramSocket::close);
-            service.close();
-            listeners.close();
-            started = false;
-        }
+    protected void closeResources() {
+        sockets.forEach(DatagramSocket::close);
+        sockets.clear();
     }
 
     /**
@@ -121,24 +61,7 @@ public class HelloUDPServer implements NewHelloServer {
      *
      * @param args command line arguments
      */
-    public static void main(String[] args) {
-        Objects.requireNonNull(args);
-        Arrays.stream(args).forEach(Objects::requireNonNull);
-        if (args.length != 2) {
-            System.err.println("Usage: HelloUDPServer <port> <threads>");
-            return;
-        }
-        try {
-            int port = HelloUDPClient.inBoundsOrThrow("Invalid port: ", 1, HelloUDPClient.MAX_PORT, Integer.parseInt(args[0]));
-            int threads = HelloUDPClient.inBoundsOrThrow("Expected positive threads: ", 1, Integer.MAX_VALUE, Integer.parseInt(args[1]));
-
-            try (HelloServer server = new HelloUDPServer()) {
-                server.start(port, threads);
-            } catch (final UncheckedIOException ex) {
-                System.err.println("An exception during server start: " + ex.getMessage());
-            }
-        } catch (final NumberFormatException e) {
-            System.err.println("Bad integer arguments: " + e.getMessage());
-        }
+    public static void main(final String[] args) {
+        serverMain(args, HelloUDPServer::new);
     }
 }

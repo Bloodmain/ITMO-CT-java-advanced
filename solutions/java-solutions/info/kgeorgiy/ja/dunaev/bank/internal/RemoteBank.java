@@ -1,7 +1,6 @@
 package info.kgeorgiy.ja.dunaev.bank.internal;
 
 import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -71,11 +70,22 @@ public class RemoteBank implements Bank {
     }
 
     @Override
-    public synchronized void makeTransaction(String id1, String id2, long amount) throws RemoteException, AccountException {
+    public void makeTransaction(String id1, String id2, long amount) throws RemoteException, AccountException {
         Account acc1 = getAccount(id1);
         Account acc2 = getAccount(id2);
 
-        acc1.updateAmount(-amount);
-        acc2.updateAmount(amount);
+        // locks the less account first to avoid deadlocks
+        boolean less = id1.compareTo(id2) < 0;
+        synchronized (less ? acc1 : acc2) {
+            synchronized (less ? acc2 : acc1) {
+                acc1.updateAmount(-amount);
+                try {
+                    acc2.updateAmount(amount);
+                } catch (final AccountException e) {
+                    acc1.updateAmount(amount);
+                    throw e;
+                }
+            }
+        }
     }
 }
