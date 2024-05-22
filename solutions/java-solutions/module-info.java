@@ -20,7 +20,6 @@ module info.kgeorgiy.ja.dunaev {
     requires info.kgeorgiy.java.advanced.mapper;
     requires info.kgeorgiy.java.advanced.crawler;
     requires info.kgeorgiy.java.advanced.hello;
-    requires java.desktop;
 
     exports info.kgeorgiy.ja.dunaev.walk;
     exports info.kgeorgiy.ja.dunaev.walk.exceptions;
