@@ -1,0 +1,7 @@
+{
+  "header": "Statistic on numbers",
+  "occurrences": "\tNumber of numbers: %s (%s unique).",
+  "minValue": "\tMinimum number: %s.",
+  "maxValue": "\tMaximum number: %s.",
+  "avg": "\tAverage number: %s."
+}

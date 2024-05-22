@@ -10,6 +10,7 @@ module info.kgeorgiy.ja.dunaev {
     requires java.rmi;
     requires org.junit.jupiter.api;
     requires org.junit.platform.launcher;
+    requires org.json;
 
     requires info.kgeorgiy.java.advanced.walk;
     requires info.kgeorgiy.java.advanced.arrayset;
@@ -19,6 +20,7 @@ module info.kgeorgiy.ja.dunaev {
     requires info.kgeorgiy.java.advanced.mapper;
     requires info.kgeorgiy.java.advanced.crawler;
     requires info.kgeorgiy.java.advanced.hello;
+    requires java.desktop;
 
     exports info.kgeorgiy.ja.dunaev.walk;
     exports info.kgeorgiy.ja.dunaev.walk.exceptions;
@@ -30,6 +32,8 @@ module info.kgeorgiy.ja.dunaev {
     exports info.kgeorgiy.ja.dunaev.hello;
     exports info.kgeorgiy.ja.dunaev.bank;
     exports info.kgeorgiy.ja.dunaev.bank.internal;
+    exports info.kgeorgiy.ja.dunaev.i18n;
 
     opens info.kgeorgiy.ja.dunaev.bank to org.junit.platform.commons;
+    opens info.kgeorgiy.ja.dunaev.i18n.test to org.junit.platform.commons;
 }

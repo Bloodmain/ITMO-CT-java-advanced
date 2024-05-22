@@ -1,0 +1,9 @@
+{
+  "header": "Statistic on words",
+  "occurrences": "\tNumber of words: %s (%s unique).",
+  "minValue": "\tMinimum word: \"%s\".",
+  "maxValue": "\tMaximum word: \"%s\".",
+  "minLength": "\tMinimum length of word: %s (\"%s\").",
+  "maxLength": "\tMaximum length of word: %s (\"%s\").",
+  "avg": "\tAverage length of word: %s."
+}

@@ -1,0 +1,9 @@
+{
+  "header": "Statistic on sentences",
+  "occurrences": "\tNumber of sentences: %s (%s unique).",
+  "minValue": "\tMinimum sentence: \"%s\".",
+  "maxValue": "\tMaximum sentence: \"%s\".",
+  "minLength": "\tMinimum length of sentence: %s (\"%s\").",
+  "maxLength": "\tMaximum length of sentence: %s (\"%s\").",
+  "avg": "\tAverage length of sentence: %s."
+}

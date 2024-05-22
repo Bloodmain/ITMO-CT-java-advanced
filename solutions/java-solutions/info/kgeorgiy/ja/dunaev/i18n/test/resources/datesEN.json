@@ -1,0 +1,7 @@
+{
+  "header": "Statistic on dates",
+  "occurrences": "\tNumber of dates: %s (%s unique).",
+  "minValue": "\tMinimum date: %s.",
+  "maxValue": "\tMaximum date: %s.",
+  "avg": "\tAverage date: %s."
+}

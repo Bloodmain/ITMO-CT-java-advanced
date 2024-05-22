@@ -1,0 +1,44 @@
+Analyzing file "info/kgeorgiy/ja/dunaev/i18n/test/resources/full/history.in".
+Summary
+	Number of sentences: 162.
+	Number of words: 3,878.
+	Number of numbers: 137.
+	Number of currencies: 1.
+	Number of dates: 11.
+Statistic on sentences
+	Number of sentences: 162 (162 unique).
+	Minimum sentence: ""The Fifteenth Amendment.".
+	Maximum sentence: "Yet, to Southerners, as late as 1860, this appeared to be a sound business decision.".
+	Minimum length of sentence: 5 ("Pres.").
+	Maximum length of sentence: 854 ("The land war
+The war in 1861
+Learn about Civil War battle-ridden Virginia, home of top generals and the Confederate capital, and the state's split with West Virginia
+Learn about Civil War battle-ridden Virginia, home of top generals and the Confederate capital, and the state's split with West Virginia
+Overview of Virginia's role in the American Civil War.See all videos for this article
+Learn about the battles that took place in West Virginia after the state seceded from Virginia to join the Union
+Learn about the battles that took place in West Virginia after the state seceded from Virginia to join the Union
+Overview of West Virginia's role in the American Civil War.See all videos for this article
+The first military operations took place in northwestern Virginia, where nonslaveholding pro-Union Virginians sought to secede from the Confederacy.").
+	Average length of sentence: 155.568.
+Statistic on words
+	Number of words: 3,878 (1,308 unique).
+	Minimum word: "15th".
+	Maximum word: "young".
+	Minimum length of word: 1 ("a").
+	Maximum length of word: 21 ("Representatives—could").
+	Average length of word: 5.259.
+Statistic on numbers
+	Number of numbers: 137 (74 unique).
+	Minimum number: -1.
+	Maximum number: 500,000.
+	Average number: 13,100.345.
+Statistic on currencies
+	Number of currencies: 1 (1 unique).
+	Minimum currency: $2.00.
+	Maximum currency: $2.00.
+	Average currency: $2.00.
+Statistic on dates
+	Number of dates: 11 (10 unique).
+	Minimum date: Apr 12, 1861.
+	Maximum date: Feb 6, 1865.
+	Average date: May 22, 1862.

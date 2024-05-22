@@ -1,0 +1,36 @@
+Analyzing file "info/kgeorgiy/ja/dunaev/i18n/test/resources/full/kgeorgiy.in".
+Summary
+	Number of sentences: 30.
+	Number of words: 117.
+	Number of numbers: 35.
+	Number of currencies: 3.
+	Number of dates: 3.
+Statistic on sentences
+	Number of sentences: 30 (30 unique).
+	Minimum sentence: "Анализируемый файл "input.txt".".
+	Maximum sentence: "Число чисел: 37.".
+	Minimum length of sentence: 13 ("Число дат: 3.").
+	Maximum length of sentence: 109 ("Максимальная длина предложения: 109 ("GK: если сюда поставить реальное предложение, то процесс не сойдётся").").
+	Average length of sentence: 37.6.
+Statistic on words
+	Number of words: 117 (48 unique).
+	Minimum word: "GK".
+	Maximum word: "языках".
+	Minimum length of word: 1 ("с").
+	Maximum length of word: 15 ("стабилизировать").
+	Average length of word: 6.641.
+Statistic on numbers
+	Number of numbers: 35 (21 unique).
+	Minimum number: -12,345.67.
+	Maximum number: 12,345.67.
+	Average number: 220.781.
+Statistic on currencies
+	Number of currencies: 3 (3 unique).
+	Minimum currency: $100.00.
+	Maximum currency: $345.67.
+	Average currency: $222.83.
+Statistic on dates
+	Number of dates: 3 (3 unique).
+	Minimum date: May 17, 2024.
+	Maximum date: May 30, 2024.
+	Average date: May 23, 2024.

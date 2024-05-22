@@ -1,0 +1,7 @@
+{
+  "header": "Statistic on currencies",
+  "occurrences": "\tNumber of currencies: %s (%s unique).",
+  "minValue": "\tMinimum currency: %s.",
+  "maxValue": "\tMaximum currency: %s.",
+  "avg": "\tAverage currency: %s."
+}

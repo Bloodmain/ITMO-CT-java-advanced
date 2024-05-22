@@ -1,0 +1,36 @@
+Analyzing file "info/kgeorgiy/ja/dunaev/i18n/test/resources/full/arabic.in".
+Summary
+	Number of sentences: 49.
+	Number of words: 431.
+	Number of numbers: 4.
+	Number of currencies: 0.
+	Number of dates: 0.
+Statistic on sentences
+	Number of sentences: 49 (49 unique).
+	Minimum sentence: "أحكم لإنعدام كل ضرب.".
+	Maximum sentence: "يعادل العناد الهادي أخر أن, بأضرار الباهضة لم جعل, أم عدد ٠٨٠٤ أجزاء.".
+	Minimum length of sentence: 18 ("به، ان عجّل واحدة.").
+	Maximum length of sentence: 96 ("بينما المشترك تعد أي, كانت والمانيا وتم إذ, عن كما أراضي سبتمبر. ٣٠ قتيل، بالفشل المتساقطة، دنو.").
+	Average length of sentence: 49.163.
+Statistic on words
+	Number of words: 431 (271 unique).
+	Minimum word: "إتفاقية".
+	Maximum word: "يكن".
+	Minimum length of word: 1 ("و").
+	Maximum length of word: 13 ("تشيكوسلوفاكيا").
+	Average length of word: 4.408.
+Statistic on numbers
+	Number of numbers: 4 (2 unique).
+	Minimum number: 30.
+	Maximum number: 804.
+	Average number: 223.5.
+Statistic on currencies
+	Number of currencies: 0 (0 unique).
+	Minimum currency: null.
+	Maximum currency: null.
+	Average currency: NaN.
+Statistic on dates
+	Number of dates: 0 (0 unique).
+	Minimum date: null.
+	Maximum date: null.
+	Average date: Jan 1, 1970.

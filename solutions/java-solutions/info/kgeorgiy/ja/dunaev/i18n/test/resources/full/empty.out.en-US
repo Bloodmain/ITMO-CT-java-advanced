@@ -1,0 +1,36 @@
+Analyzing file "info/kgeorgiy/ja/dunaev/i18n/test/resources/full/empty.in".
+Summary
+	Number of sentences: 0.
+	Number of words: 0.
+	Number of numbers: 0.
+	Number of currencies: 0.
+	Number of dates: 0.
+Statistic on sentences
+	Number of sentences: 0 (0 unique).
+	Minimum sentence: "null".
+	Maximum sentence: "null".
+	Minimum length of sentence: 0 ("null").
+	Maximum length of sentence: 0 ("null").
+	Average length of sentence: NaN.
+Statistic on words
+	Number of words: 0 (0 unique).
+	Minimum word: "null".
+	Maximum word: "null".
+	Minimum length of word: 0 ("null").
+	Maximum length of word: 0 ("null").
+	Average length of word: NaN.
+Statistic on numbers
+	Number of numbers: 0 (0 unique).
+	Minimum number: null.
+	Maximum number: null.
+	Average number: NaN.
+Statistic on currencies
+	Number of currencies: 0 (0 unique).
+	Minimum currency: null.
+	Maximum currency: null.
+	Average currency: NaN.
+Statistic on dates
+	Number of dates: 0 (0 unique).
+	Minimum date: null.
+	Maximum date: null.
+	Average date: Jan 1, 1970.
