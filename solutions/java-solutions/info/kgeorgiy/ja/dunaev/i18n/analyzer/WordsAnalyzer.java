@@ -21,9 +21,7 @@ public class WordsAnalyzer extends BreakIteratorAnalyzer {
      * @param outputBundle the output resource bundle (should be agreed with the output locale)
      */
     public WordsAnalyzer(Locale inputLocale, Locale outputLocale, ResourceBundle outputBundle) {
-        super(inputLocale);
-        this.breakIterator = BreakIterator.getWordInstance(inputLocale);
-        this.formatter = new TextFormatter(outputLocale, outputBundle, "Word", stats);
+        super(inputLocale, BreakIterator.getWordInstance(inputLocale), s -> new TextFormatter(outputLocale, outputBundle, "Word", s));
     }
 
     @Override

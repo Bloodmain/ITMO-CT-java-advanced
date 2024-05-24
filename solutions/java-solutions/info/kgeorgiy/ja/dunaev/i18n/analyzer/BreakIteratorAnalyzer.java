@@ -7,6 +7,7 @@ import java.text.BreakIterator;
 import java.text.Collator;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -19,8 +20,10 @@ public abstract class BreakIteratorAnalyzer implements Analyzer {
     protected TextStats stats;
     protected TextFormatter formatter;
 
-    protected BreakIteratorAnalyzer(Locale inputLocale) {
+    protected BreakIteratorAnalyzer(Locale inputLocale, BreakIterator it, Function<TextStats, TextFormatter> formatter) {
         this.stats = new TextStats(Collator.getInstance(inputLocale));
+        this.breakIterator = it;
+        this.formatter = formatter.apply(stats);
     }
 
     protected List<String> collectStats(String text, Predicate<String> checker) {

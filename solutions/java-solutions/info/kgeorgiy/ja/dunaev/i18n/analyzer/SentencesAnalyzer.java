@@ -21,9 +21,7 @@ public class SentencesAnalyzer extends BreakIteratorAnalyzer {
      * @param outputBundle the output resource bundle (should be agreed with the output locale)
      */
     public SentencesAnalyzer(Locale inputLocale, Locale outputLocale, ResourceBundle outputBundle) {
-        super(inputLocale);
-        this.breakIterator = BreakIterator.getSentenceInstance(inputLocale);
-        this.formatter = new TextFormatter(outputLocale, outputBundle, "Sentence", stats);
+        super(inputLocale, BreakIterator.getSentenceInstance(inputLocale), s -> new TextFormatter(outputLocale, outputBundle, "Sentence", s));
     }
 
     @Override

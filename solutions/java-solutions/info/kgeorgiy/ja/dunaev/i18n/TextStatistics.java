@@ -33,14 +33,7 @@ public class TextStatistics {
         Arrays.stream(args).forEach(Objects::requireNonNull);
 
         if (args.length != 4) {
-            System.out.println(MessageFormat.format(
-                    DEFAULT_BUNDLE.getString("FormatUsage"),
-                    DEFAULT_BUNDLE.getString("Usage"),
-                    DEFAULT_BUNDLE.getString("InputLocale"),
-                    DEFAULT_BUNDLE.getString("OutputLocale"),
-                    DEFAULT_BUNDLE.getString("InputFile"),
-                    DEFAULT_BUNDLE.getString("OutputFile")
-            ));
+            System.out.println(MessageFormat.format(DEFAULT_BUNDLE.getString("FormatUsage"), DEFAULT_BUNDLE.getString("Usage"), DEFAULT_BUNDLE.getString("InputLocale"), DEFAULT_BUNDLE.getString("OutputLocale"), DEFAULT_BUNDLE.getString("InputFile"), DEFAULT_BUNDLE.getString("OutputFile")));
             return;
         }
 
@@ -55,9 +48,8 @@ public class TextStatistics {
                 try {
                     final Path outputPath = Path.of(args[3]);
                     createParents(outputPath);
-                    Files.writeString(outputPath,
-                            collectStatistics(text, inputLocale, outputLocale, outputBundle, inputFileName),
-                            DEFAULT_CHARSET);
+                    String output = collectStatistics(text, inputLocale, outputLocale, outputBundle, inputFileName);
+                    Files.writeString(outputPath, output, DEFAULT_CHARSET);
                 } catch (final IOException e) {
                     error(e, "OutputError", outputBundle);
                 }
@@ -70,11 +62,7 @@ public class TextStatistics {
     }
 
     private static void error(Throwable e, String msgKey, ResourceBundle bundle) {
-        System.err.println(MessageFormat.format(
-                bundle.getString("FormatError"),
-                bundle.getString(msgKey),
-                e.getLocalizedMessage()
-        ));
+        System.err.println(MessageFormat.format(bundle.getString("FormatError"), bundle.getString(msgKey), e.getLocalizedMessage()));
     }
 
     private static void createParents(Path path) {
@@ -86,8 +74,7 @@ public class TextStatistics {
         }
     }
 
-    private static String collectStatistics(String text, Locale inputLocale, Locale outputLocale,
-                                            ResourceBundle outputBundle, String inputFileName) {
+    private static String collectStatistics(String text, Locale inputLocale, Locale outputLocale, ResourceBundle outputBundle, String inputFileName) {
 
         SummaryAnalyzer analyzer = new SummaryAnalyzer(inputLocale, outputLocale, outputBundle, inputFileName);
         return analyzer.getLocalizedStats(text);
