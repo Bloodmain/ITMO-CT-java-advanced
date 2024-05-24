@@ -26,7 +26,7 @@ public class Walker {
                 hasher.update(BUFFER, count);
             }
             return hasher.digest();
-        } catch (final IOException e) {
+        } catch (final IOException | SecurityException e) {
             return hasher.errorHash();
         }
     }
@@ -123,7 +123,7 @@ public class Walker {
                             } catch (final InvalidPathException e) {
                                 write(output, hasher.errorHash(), pathname);
                             }
-                        } catch (final IOException e) {
+                        } catch (final IOException | SecurityException e) {
                             throw new IOFileException("Can't write to output file: " + e.getMessage(), e);
                         }
                     }
@@ -133,13 +133,13 @@ public class Walker {
 
             } catch (final InvalidPathException e) {
                 throw new PathException("Invalid path to output file: " + e.getMessage(), e);
-            } catch (final IOException e) {
+            } catch (final IOException | SecurityException e) {
                 throw new IOFileException("Can't open output file: " + e.getMessage(), e);
             }
 
         } catch (final InvalidPathException e) {
             throw new PathException("Invalid path to input file: " + e.getMessage(), e);
-        } catch (final IOException e) {
+        } catch (final IOException | SecurityException e) {
             throw new IOFileException("Can't open input file: " + e.getMessage(), e);
         }
     }
