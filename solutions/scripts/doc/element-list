@@ -4,6 +4,11 @@ info.kgeorgiy.ja.dunaev.bank
 info.kgeorgiy.ja.dunaev.bank.internal
 info.kgeorgiy.ja.dunaev.crawler
 info.kgeorgiy.ja.dunaev.hello
+info.kgeorgiy.ja.dunaev.i18n
+info.kgeorgiy.ja.dunaev.i18n.analyzer
+info.kgeorgiy.ja.dunaev.i18n.analyzer.formatter
+info.kgeorgiy.ja.dunaev.i18n.analyzer.stat
+info.kgeorgiy.ja.dunaev.i18n.test
 info.kgeorgiy.ja.dunaev.implementor
 info.kgeorgiy.ja.dunaev.iterative
 info.kgeorgiy.ja.dunaev.student

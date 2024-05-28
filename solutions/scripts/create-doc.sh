@@ -23,6 +23,6 @@ javadoc -d "$CURRENT_DIR/doc" \
   -author \
   --module-source-path "$SOLUTIONS_MODULE=$SOLUTIONS_PATH" \
   $MODULES_SOURCES \
-  --module-path "$TESTS_PATH/lib" \
+  --module-path "$TESTS_PATH/lib:$PROJECT_PATH/solutions/lib" \
   --module "$SOLUTIONS_MODULE" \
   $MODULES_NAMES
